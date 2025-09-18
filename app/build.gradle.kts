@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "org.appdevncsu.foodfinder"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "org.appdevncsu.foodfinder"
