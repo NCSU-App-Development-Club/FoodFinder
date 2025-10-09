@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,14 +67,16 @@ fun Top() {
 @Composable
 fun LocationItem(location: DiningLocation) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-        Card(modifier = Modifier.padding(vertical = 8.dp).size(width = 200.dp, height = 100.dp).clickable{},
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF911C1C), contentColor = Color(0xFFFFFFFF)))
+        Card(modifier = Modifier.padding(vertical = 10.dp).size(width = 400.dp, height = 225.dp).offset(y = 150.dp).clickable{},
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF), contentColor = Color(0xFFFFFFFF)))
         {
 
-            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(modifier = Modifier.fillMaxSize().padding(vertical = 25.dp, horizontal = 20.dp), verticalArrangement = Arrangement.Bottom) {
 
 
-                Text(text = location.name, fontSize = 20.sp)
+                Text(text = location.name,
+                    fontSize = 20.sp,
+                    color = Color.Black)
 
             }
 
@@ -88,5 +91,5 @@ fun LocationItem(location: DiningLocation) {
 @Preview
 fun LocationLisPreview() {
     Top()
-    //LocationList(sampleLocations)
+    LocationList(sampleLocations)
 }

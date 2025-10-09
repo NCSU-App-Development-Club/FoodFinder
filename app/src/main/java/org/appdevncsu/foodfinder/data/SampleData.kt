@@ -48,4 +48,5 @@ val sampleMenuListItems = listOf(
 val sampleLocations = listOf(
     DiningLocation("Fountain Dining Hall", 1, sampleMenuListItems),
     DiningLocation("Clark Dining Hall", 2, sampleMenuListItems),
+    DiningLocation("Case Dining Hall", unitId = 3, menus = sampleMenuListItems)
 )
