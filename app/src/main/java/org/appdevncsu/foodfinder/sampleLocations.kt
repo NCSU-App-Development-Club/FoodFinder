@@ -75,7 +75,6 @@ fun LocationItem(location: DiningLocation) {
         {
 
 
-
             Image(
                 painter = painterResource(id = location.imageRes),
                 contentDescription = null,
