@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import kotlinx.serialization.Serializable
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 class MainActivity : ComponentActivity() {
@@ -51,8 +52,13 @@ fun NavigationGraph(modifier: Modifier) {
     }
 }
 
+@Serializable
 object HomePageDestination
+
+@Serializable
 data class MenuListPageDestination(val locationId: Int)
+
+@Serializable
 data class MenuPageDestination(val menuId: Int)
 
 /** Placeholder */
