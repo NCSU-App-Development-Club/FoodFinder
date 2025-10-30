@@ -4,13 +4,22 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
+import kotlinx.serialization.Serializable
+import org.appdevncsu.foodfinder.composables.LocationList
+import org.appdevncsu.foodfinder.composables.MenuList
+import org.appdevncsu.foodfinder.composables.Top
+import org.appdevncsu.foodfinder.data.sampleLocations
+import org.appdevncsu.foodfinder.data.sampleMenuListItems
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,10 +29,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             FoodFinderTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    NavigationGraph(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
@@ -31,17 +37,40 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun NavigationGraph(modifier: Modifier) {
+    val navController = rememberNavController()
+
+    NavHost(navController, modifier = modifier, startDestination = MenuListPageDestination(1)) {
+        composable<HomePageDestination> {
+            Column {
+                Top()
+                LocationList(sampleLocations)
+            }
+        }
+
+        composable<MenuListPageDestination> { backStackEntry ->
+            val locationId = backStackEntry.toRoute<MenuListPageDestination>().locationId
+            MenuList(sampleMenuListItems)
+        }
+
+        composable<MenuPageDestination> { backStackEntry ->
+            val menuId = backStackEntry.toRoute<MenuPageDestination>().menuId
+            MenuSectionList(menuId)
+        }
+    }
 }
 
-@Preview(showBackground = true)
+@Serializable
+object HomePageDestination
+
+@Serializable
+data class MenuListPageDestination(val locationId: Int)
+
+@Serializable
+data class MenuPageDestination(val menuId: Int)
+
+/** Placeholder */
 @Composable
-fun GreetingPreview() {
-    FoodFinderTheme {
-        Greeting("Android")
-    }
+fun MenuSectionList(menuId: Int) {
+
 }
