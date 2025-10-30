@@ -50,10 +50,12 @@ fun LocationList(locations: List<DiningLocation>) {
 
 @Composable
 fun Top() {
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .fillMaxHeight(.15f)
-        .background(Color.Red))
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(.15f)
+            .background(Color.Red)
+    )
     Column {
         Text(
             text = "Food finder",
