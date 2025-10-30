@@ -4,17 +4,20 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
+import org.appdevncsu.foodfinder.composables.LocationList
+import org.appdevncsu.foodfinder.composables.Top
+import org.appdevncsu.foodfinder.data.sampleLocations
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,7 +40,10 @@ fun NavigationGraph(modifier: Modifier) {
 
     NavHost(navController, modifier = modifier, startDestination = HomePageDestination) {
         composable<HomePageDestination> {
-            LocationList(navController)
+            Column {
+                Top()
+                LocationList(sampleLocations)
+            }
         }
 
         composable<MenuListPageDestination> { backStackEntry ->
@@ -63,13 +69,13 @@ data class MenuPageDestination(val menuId: Int)
 
 /** Placeholder */
 @Composable
-fun LocationList(navController: NavController) {
-//    navController.navigate(MenuListPageDestination(12))
-}
-
-/** Placeholder */
-@Composable
 fun MenuList(locationId: Int) {
+
+
+    val myMap = mapOf(
+        "key" to R.drawable.ic_launcher_background,
+        "key2" to R.drawable.clark
+    )
 
 }
 
