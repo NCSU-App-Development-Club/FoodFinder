@@ -16,8 +16,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 import org.appdevncsu.foodfinder.composables.LocationList
+import org.appdevncsu.foodfinder.composables.MenuList
 import org.appdevncsu.foodfinder.composables.Top
 import org.appdevncsu.foodfinder.data.sampleLocations
+import org.appdevncsu.foodfinder.data.sampleMenuListItems
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 class MainActivity : ComponentActivity() {
@@ -38,7 +40,7 @@ class MainActivity : ComponentActivity() {
 fun NavigationGraph(modifier: Modifier) {
     val navController = rememberNavController()
 
-    NavHost(navController, modifier = modifier, startDestination = HomePageDestination) {
+    NavHost(navController, modifier = modifier, startDestination = MenuListPageDestination(1)) {
         composable<HomePageDestination> {
             Column {
                 Top()
@@ -48,7 +50,7 @@ fun NavigationGraph(modifier: Modifier) {
 
         composable<MenuListPageDestination> { backStackEntry ->
             val locationId = backStackEntry.toRoute<MenuListPageDestination>().locationId
-            MenuList(locationId)
+            MenuList(sampleMenuListItems)
         }
 
         composable<MenuPageDestination> { backStackEntry ->
@@ -66,18 +68,6 @@ data class MenuListPageDestination(val locationId: Int)
 
 @Serializable
 data class MenuPageDestination(val menuId: Int)
-
-/** Placeholder */
-@Composable
-fun MenuList(locationId: Int) {
-
-
-    val myMap = mapOf(
-        "key" to R.drawable.ic_launcher_background,
-        "key2" to R.drawable.clark
-    )
-
-}
 
 /** Placeholder */
 @Composable

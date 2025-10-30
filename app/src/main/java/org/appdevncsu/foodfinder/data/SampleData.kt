@@ -46,6 +46,7 @@ val sampleMenuListItems = listOf(
     DiningMenuListItem("Thursday, September 18th, 2025", "Breakfast", 1, sampleMenuSections),
     DiningMenuListItem("Thursday, September 18th, 2025", "Lunch", 2, sampleMenuSections),
     DiningMenuListItem("Thursday, September 18th, 2025", "Dinner", 3, sampleMenuSections),
+    DiningMenuListItem("Thursday, September 19th, 2025", "Breakfast", 4, sampleMenuSections),
 )
 
 val sampleLocations = listOf(
