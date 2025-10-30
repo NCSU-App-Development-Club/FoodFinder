@@ -39,8 +39,9 @@ import org.appdevncsu.foodfinder.data.sampleLocations
 @Composable
 fun LocationList(locations: List<DiningLocation>) {
 
-    LazyColumn (modifier = Modifier.fillMaxSize()){
-        items(locations) { location -> LocationItem(location)
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(locations) { location ->
+            LocationItem(location)
 
         }
     }
@@ -49,14 +50,17 @@ fun LocationList(locations: List<DiningLocation>) {
 
 @Composable
 fun Top() {
-    Box(modifier = Modifier.fillMaxWidth().fillMaxHeight(.15f).background(Color.Red))
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .fillMaxHeight(.15f)
+        .background(Color.Red))
     Column {
         Text(
             text = "Food finder",
             color = Color.White,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 20.dp),
             fontSize = 30.sp
-            )
+        )
         Text(
             text = "NCSU Dining",
             color = Color.White,
@@ -67,11 +71,21 @@ fun Top() {
         )
     }
 }
+
 @Composable
 fun LocationItem(location: DiningLocation) {
-   Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-        Card(modifier = Modifier.padding(vertical = 10.dp).size(width = 350.dp, height = 225.dp).offset(y = 150.dp).clickable{},
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF), contentColor = Color(0xFFFFFFFF)))
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Card(
+            modifier = Modifier
+                .padding(vertical = 10.dp)
+                .size(width = 350.dp, height = 225.dp)
+                .offset(y = 150.dp)
+                .clickable {},
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFFFFFFF),
+                contentColor = Color(0xFFFFFFFF)
+            )
+        )
         {
 
 
@@ -82,31 +96,41 @@ fun LocationItem(location: DiningLocation) {
                 contentScale = ContentScale.Crop,
             )
 
-            Column(modifier = Modifier.fillMaxSize().padding(vertical = 15.dp, horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-
-
-
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 15.dp, horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
 
                 Row(Modifier.fillMaxSize()) {
-                    Text(text = location.name,
+                    Text(
+                        text = location.name,
                         modifier = Modifier.width(160.dp),
                         fontSize = 20.sp,
-                        color = Color.Black)
+                        color = Color.Black
+                    )
 
-                    Box(modifier = Modifier.padding(start = 70.dp).width(60.dp).height(50.dp).clip(RoundedCornerShape(percent = 50)).background(Color(0xFF006400)), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 70.dp)
+                            .width(60.dp)
+                            .height(50.dp)
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(Color(0xFF006400)),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
                             text = "status >"
                         )
                     }
                 }
 
-
             }
 
 
-
         }
-   }
+    }
 
 }
 
