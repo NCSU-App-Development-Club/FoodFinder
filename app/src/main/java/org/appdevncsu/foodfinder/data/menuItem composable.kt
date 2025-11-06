@@ -1,6 +1,7 @@
 package org.appdevncsu.foodfinder.data
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
@@ -9,7 +10,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.appdevncsu.foodfinder.R
 
@@ -78,7 +81,7 @@ fun MenuItem(menuItem: DiningMenuItem, modifier: Modifier = Modifier) {
             }
         }
         Icon(
-            painter = painterResource(R.drawable.star_outline),
+            painter = painterResource(R.drawable.favorite_24px),
             contentDescription = "Favorite",
             modifier = Modifier
                 .size(24.dp)
@@ -92,5 +95,13 @@ fun MenuItem(menuItem: DiningMenuItem, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 4.dp, start = 4.dp)
         )
+    }
+}
+
+@Preview
+@Composable
+private fun MenuItemPreview() {
+    Box(modifier = Modifier.background(Color.White)) {
+        MenuItem(sampleMenuItems.get(2))
     }
 }

@@ -31,7 +31,7 @@ data class DiningMenuItem(
 val sampleMenuItems = listOf(
     DiningMenuItem("Freshly Scrambled Eggs", emptyList(), 1),
     DiningMenuItem("Beer Battered Cod", emptyList(), 2),
-    DiningMenuItem("Grilled Onions and Peppers", listOf("Vegetarian"), 3),
+    DiningMenuItem("Grilled Onions and Peppers", listOf("Vegetarian", "Vegan"), 3),
     DiningMenuItem("Spinach", listOf("Vegan"), 4),
     DiningMenuItem("Grilled Cheese Panini", listOf("Wolf Approved"), 5),
 )
