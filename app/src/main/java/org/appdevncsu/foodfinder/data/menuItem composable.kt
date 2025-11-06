@@ -1,4 +1,4 @@
-package com.example.myapplication
+package org.appdevncsu.foodfinder.data
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -17,11 +17,6 @@ import org.appdevncsu.foodfinder.R
 // -------------------------------
 // Data Models
 // -------------------------------
-data class DiningMenuItem(
-    val name: String,
-    val flags: List<String>,
-    val itemId: Int
-)
 
 data class BadgeInfo(
     val flagName: String,
