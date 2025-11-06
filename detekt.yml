@@ -1,6 +1,19 @@
 naming:
+  # Recommended config for Jetpack Compose: https://detekt.dev/docs/introduction/compose
   FunctionNaming:
     ignoreAnnotated: ["Composable"]
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9]*'
+complexity:
+  LongParameterList:
+    ignoreDefaultParameters: true
+  TooManyFunctions:
+    ignoreAnnotatedFunctions: ["Preview"]
+style:
+  MagicNumber:
+    ignorePropertyDeclaration: true
+  UnusedPrivateMember:
+    ignoreAnnotated: ["Preview"]
 
 Compose:
   ComposableAnnotationNaming:

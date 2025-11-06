@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun NavigationGraph(modifier: Modifier) {
+fun NavigationGraph(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
 
     Scaffold(modifier = modifier, topBar = {
@@ -65,7 +65,7 @@ fun NavigationGraph(modifier: Modifier) {
     }) { innerPadding ->
         NavHost(
             navController,
-            modifier = modifier.padding(innerPadding),
+            modifier = Modifier.padding(innerPadding),
             startDestination = Route.MenuList(1)
         ) {
             composable<Route.Home> {
