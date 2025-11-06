@@ -1,7 +1,10 @@
 package org.appdevncsu.foodfinder.data
 
+import org.appdevncsu.foodfinder.R
+
 data class DiningLocation(
     val name: String, // e.g. Fountain Dining Hall
+    val imageRes: Int,
     val unitId: Int,
     val menus: List<DiningMenuListItem>
 )
@@ -43,9 +46,11 @@ val sampleMenuListItems = listOf(
     DiningMenuListItem("Thursday, September 18th, 2025", "Breakfast", 1, sampleMenuSections),
     DiningMenuListItem("Thursday, September 18th, 2025", "Lunch", 2, sampleMenuSections),
     DiningMenuListItem("Thursday, September 18th, 2025", "Dinner", 3, sampleMenuSections),
+    DiningMenuListItem("Thursday, September 19th, 2025", "Breakfast", 4, sampleMenuSections),
 )
 
 val sampleLocations = listOf(
-    DiningLocation("Fountain Dining Hall", 1, sampleMenuListItems),
-    DiningLocation("Clark Dining Hall", 2, sampleMenuListItems),
+    DiningLocation("Fountain Dining Hall", R.drawable.fount, 1, sampleMenuListItems),
+    DiningLocation("Clark Dining Hall", R.drawable.clark, 2, sampleMenuListItems),
+    DiningLocation("Case Dining Hall", R.drawable.cased, unitId = 3, menus = sampleMenuListItems)
 )
