@@ -1,3 +1,5 @@
+import io.gitlab.arturbosch.detekt.Detekt
+import org.gradle.kotlin.dsl.detekt
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -5,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.detekt)
 }
 
 android {
@@ -62,4 +65,26 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
+
+    detektPlugins(libs.detekt.compose)
+}
+
+tasks.withType<Detekt>().configureEach {
+    reports.sarif.required = true
+    reports.sarif.outputLocation = rootProject.projectDir.resolve("detekt-report.sarif")
+}
+
+detekt {
+    toolVersion = libs.plugins.detekt.get().version.toString()
+    config.setFrom(file("../detekt.yml"))
+    buildUponDefaultConfig = true
+    basePath = rootProject.projectDir.absolutePath
+}
+
+val reportMerge by tasks.registering(io.gitlab.arturbosch.detekt.report.ReportMergeTask::class) {
+    output.set(rootProject.layout.buildDirectory.file("reports/detekt/merge.sarif"))
+}
+
+reportMerge {
+    input.from(tasks.withType<Detekt>().map { it.reports.sarif.outputLocation })
 }

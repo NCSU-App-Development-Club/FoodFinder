@@ -39,8 +39,8 @@ import org.appdevncsu.foodfinder.data.DiningLocation
 import org.appdevncsu.foodfinder.data.sampleLocations
 
 @Composable
-fun LocationList(locations: List<DiningLocation>) {
-    Column {
+fun LocationList(locations: List<DiningLocation>, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(locations) { location ->
                 LocationItem(location, modifier = Modifier.padding(horizontal = 8.dp))
@@ -100,6 +100,6 @@ fun LocationItem(location: DiningLocation, modifier: Modifier = Modifier) {
 
 @Composable
 @Preview
-fun LocationListPreview() {
+private fun LocationListPreview() {
     LocationList(sampleLocations)
 }
