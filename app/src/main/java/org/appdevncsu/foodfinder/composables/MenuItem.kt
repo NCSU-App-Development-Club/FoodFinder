@@ -1,4 +1,4 @@
-package org.appdevncsu.foodfinder.data
+package org.appdevncsu.foodfinder.composables
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -18,6 +18,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.appdevncsu.foodfinder.R
+import org.appdevncsu.foodfinder.data.DiningMenuItem
+import org.appdevncsu.foodfinder.data.sampleMenuItems
 
 
 // -------------------------------
