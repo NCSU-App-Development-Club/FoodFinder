@@ -19,7 +19,6 @@ import org.appdevncsu.foodfinder.composables.LocationList
 import org.appdevncsu.foodfinder.composables.MenuList
 import org.appdevncsu.foodfinder.composables.Top
 import org.appdevncsu.foodfinder.data.sampleLocations
-import org.appdevncsu.foodfinder.data.sampleMenuListItems
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 class MainActivity : ComponentActivity() {
@@ -40,17 +39,19 @@ class MainActivity : ComponentActivity() {
 fun NavigationGraph(modifier: Modifier) {
     val navController = rememberNavController()
 
-    NavHost(navController, modifier = modifier, startDestination = MenuListPageDestination(1)) {
+    NavHost(navController, modifier = modifier, startDestination = HomePageDestination) {
         composable<HomePageDestination> {
             Column {
                 Top()
-                LocationList(sampleLocations)
+                LocationList(sampleLocations, onLocationClick = { id -> navController.navigate(
+                    MenuListPageDestination(id))})
             }
         }
 
         composable<MenuListPageDestination> { backStackEntry ->
-            val locationId = backStackEntry.toRoute<MenuListPageDestination>().locationId
-            MenuList(sampleMenuListItems)
+            val unitID = backStackEntry.toRoute<MenuListPageDestination>().unitId
+            val loc = sampleLocations.first{ it.unitId == unitID }
+            MenuList(loc.menus)
         }
 
         composable<MenuPageDestination> { backStackEntry ->
@@ -64,7 +65,7 @@ fun NavigationGraph(modifier: Modifier) {
 object HomePageDestination
 
 @Serializable
-data class MenuListPageDestination(val locationId: Int)
+data class MenuListPageDestination(val unitId: Int)
 
 @Serializable
 data class MenuPageDestination(val menuId: Int)

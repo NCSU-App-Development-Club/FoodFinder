@@ -35,14 +35,13 @@ import org.appdevncsu.foodfinder.data.DiningLocation
 import org.appdevncsu.foodfinder.data.sampleLocations
 
 @Composable
-fun LocationList(locations: List<DiningLocation>) {
-    Column {
+fun LocationList(locations: List<DiningLocation>, onLocationClick: (Int) -> Unit) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(locations) { location ->
-                LocationItem(location, modifier = Modifier.padding(horizontal = 8.dp))
+                LocationItem(location, modifier = Modifier.padding(horizontal = 8.dp), onLocationClick)
             }
         }
-    }
+
 }
 
 
@@ -71,11 +70,11 @@ fun Top() {
 }
 
 @Composable
-fun LocationItem(location: DiningLocation, modifier: Modifier = Modifier) {
+fun LocationItem(location: DiningLocation, modifier: Modifier = Modifier, onClick: (Int) -> Unit) {
     Card(
         modifier = modifier
             .padding(vertical = 10.dp)
-            .clickable {},
+            .clickable { onClick(location.unitId)},
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFFFFFFF),
             contentColor = Color(0xFFFFFFFF)
@@ -92,7 +91,7 @@ fun LocationItem(location: DiningLocation, modifier: Modifier = Modifier) {
 
         Row(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(vertical = 15.dp, horizontal = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -124,6 +123,6 @@ fun LocationItem(location: DiningLocation, modifier: Modifier = Modifier) {
 fun LocationListPreview() {
     Column {
         Top()
-        LocationList(sampleLocations)
+        LocationList(sampleLocations, onLocationClick = {})
     }
 }
