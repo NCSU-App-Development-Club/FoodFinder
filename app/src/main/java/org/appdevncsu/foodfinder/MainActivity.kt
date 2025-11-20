@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -22,7 +23,6 @@ import org.appdevncsu.foodfinder.composables.LocationList
 import org.appdevncsu.foodfinder.composables.MenuList
 import org.appdevncsu.foodfinder.composables.TopBar
 import org.appdevncsu.foodfinder.data.sampleLocations
-import org.appdevncsu.foodfinder.data.sampleMenuListItems
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 class MainActivity : ComponentActivity() {
@@ -69,12 +69,15 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
             startDestination = Route.MenuList(1)
         ) {
             composable<Route.Home> {
-                LocationList()
+                Column {
+                    LocationList(onLocationClick = { id -> navController.navigate(Route.MenuList(id))})
+                }
             }
 
             composable<Route.MenuList> { backStackEntry ->
-                val locationId = backStackEntry.toRoute<Route.MenuList>().locationId
-                MenuList(sampleMenuListItems)
+                val unitID = backStackEntry.toRoute<Route.MenuList>().unitId
+                val loc = sampleLocations.first{ it.unitId == unitID }
+                MenuList(loc.menus)
             }
 
             composable<Route.Menu> { backStackEntry ->
@@ -93,13 +96,12 @@ sealed class Route {
 
     @Serializable
     @SerialName("menuList")
-    data class MenuList(val locationId: Int) : Route()
+    data class MenuList(val unitId: Int) : Route()
 
     @Serializable
     @SerialName("menu")
     data class Menu(val menuId: Int) : Route()
 }
-
 
 /** Placeholder */
 @Composable

@@ -37,24 +37,28 @@ import org.appdevncsu.foodfinder.data.DiningLocation
 import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
 
 @Composable
-fun LocationList() {
+fun LocationList(onLocationClick: (Int) -> Unit) {
     val viewModel: LocationListViewModel = viewModel()
     val locations by viewModel.locations.collectAsState()
     Column {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(locations) { location ->
-                LocationItem(location, modifier = Modifier.padding(horizontal = 8.dp))
+                LocationItem(
+                    location,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    onLocationClick
+                )
             }
         }
     }
 }
 
 @Composable
-fun LocationItem(location: DiningLocation, modifier: Modifier = Modifier) {
+fun LocationItem(location: DiningLocation, modifier: Modifier = Modifier, onClick: (Int) -> Unit) {
     Card(
         modifier = modifier
             .padding(vertical = 10.dp)
-            .clickable {},
+            .clickable { onClick(location.unitId) },
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFFFFFFF),
             contentColor = Color(0xFFFFFFFF)
@@ -71,7 +75,7 @@ fun LocationItem(location: DiningLocation, modifier: Modifier = Modifier) {
 
         Row(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(vertical = 15.dp, horizontal = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -101,5 +105,5 @@ fun LocationItem(location: DiningLocation, modifier: Modifier = Modifier) {
 @Composable
 @Preview
 fun LocationListPreview() {
-    LocationList()
+    LocationList(onLocationClick = {})
 }
