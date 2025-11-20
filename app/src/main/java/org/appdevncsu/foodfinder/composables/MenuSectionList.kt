@@ -35,9 +35,14 @@ fun MenuSectionList(
     val sections by viewModel.sections.collectAsState()
 
     if (sections.isEmpty()) {
-        Column(modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Column(
+            modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             Text("This menu could not be found.")
         }
+        return
     }
 
     LazyColumn(

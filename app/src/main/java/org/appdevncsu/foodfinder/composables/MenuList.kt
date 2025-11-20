@@ -50,9 +50,14 @@ fun MenuList(
     val menus by viewModel.menuList.collectAsState()
 
     if (menus.isEmpty()) {
-        Column(modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Column(
+            modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             Text("There are no menus available for this location.")
         }
+        return
     }
 
     val dates = menus.groupBy { it.date }

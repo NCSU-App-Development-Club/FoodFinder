@@ -105,7 +105,7 @@ fun LocationItem(
 }
 
 @Composable
-fun LocationImage(name: String) {
+fun LocationImage(name: String, modifier: Modifier = Modifier) {
     val image = when (name) {
         "Case Dining Hall" -> R.drawable.cased
         "Clark Dining Hall" -> R.drawable.clark
@@ -116,7 +116,7 @@ fun LocationImage(name: String) {
     Image(
         painter = painterResource(id = image),
         contentDescription = null,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .aspectRatio(16f / 9f, matchHeightConstraintsFirst = true),
         contentScale = ContentScale.Crop,

@@ -16,11 +16,6 @@ import retrofit2.create
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-const val BASE_URL = "https://gepaaabqcrdbnxyunmuj.supabase.co/rest/v1/"
-const val API_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcGFhYWJxY3JkYm54eXVubXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMDk5MzQsImV4cCI6MjA3NzU4NTkzNH0.gGnwah3aBmucqqm5if9IYbXvnmKz-8Hhq3hHCO38LvU"
-// ^ As far as I know, this key doesn't allow you to access or update anything secret.
-
 interface APIService {
 
     @GET("api_locations")
@@ -45,6 +40,11 @@ interface APIService {
 @InstallIn(SingletonComponent::class)
 internal object APIServiceModule {
     private val json = Json { ignoreUnknownKeys = true }
+
+    private const val BASE_URL = "https://gepaaabqcrdbnxyunmuj.supabase.co/rest/v1/"
+    private const val API_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlcGFhYWJxY3JkYm54eXVubXVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwMDk5MzQsImV4cCI6MjA3NzU4NTkzNH0.gGnwah3aBmucqqm5if9IYbXvnmKz-8Hhq3hHCO38LvU"
+    // ^ As far as I know, this key doesn't allow you to access or update anything secret.
 
     @Provides
     fun provideAPIService(): APIService {
