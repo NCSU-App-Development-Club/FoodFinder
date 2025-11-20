@@ -34,12 +34,18 @@ import org.appdevncsu.foodfinder.data.sampleLocations
 import org.appdevncsu.foodfinder.viewmodel.MenuListViewModel
 
 @Composable
-fun MenuList(locationId: Int, navController: NavController, modifier: Modifier = Modifier) {
-    val viewModel = viewModel<MenuListViewModel>()
-    val menus by viewModel.menuList.collectAsState()
+fun MenuList(
+    locationId: Int,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewModel: MenuListViewModel = viewModel()
+) {
     LaunchedEffect(locationId) {
         viewModel.loadMenusForLocation(locationId)
     }
+
+    val menus by viewModel.menuList.collectAsState()
+
     val dates = menus.groupBy { it.date }
     LazyColumn(modifier = modifier.padding(horizontal = 8.dp)) {
         items(dates.keys.toList()) { date ->

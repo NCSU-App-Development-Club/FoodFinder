@@ -9,7 +9,7 @@ import org.appdevncsu.foodfinder.data.sampleMenuListItems
 
 class MenuListViewModel : ViewModel() {
     fun loadMenusForLocation(locationId: Int) {
-        // TODO
+        TODO("Not yet implemented")
     }
 
     private val _menuList: MutableStateFlow<List<DiningMenuListItem>> = MutableStateFlow(emptyList())

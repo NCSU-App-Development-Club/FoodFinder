@@ -9,6 +9,10 @@ import org.appdevncsu.foodfinder.data.DiningMenuSection
 import org.appdevncsu.foodfinder.data.sampleMenuSections
 
 class MenuViewModel : ViewModel() {
+    fun loadMenu(menuId: Int) {
+        TODO("Not yet implemented")
+    }
+
     private val _sections: MutableStateFlow<List<DiningMenuSection>> = MutableStateFlow(emptyList())
 
     val sections: StateFlow<List<DiningMenuSection>> = _sections
