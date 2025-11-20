@@ -23,7 +23,7 @@ data class DiningMenuSection(
     @SerialName("id")
     val sectionId: Int,
     val name: String, // e.g. "Display Station" or "Home Style Entrée",
-    @SerialName("menu_items")
+    @SerialName("menu_items_with_names")
     val menuItems: List<DiningMenuItem>
 )
 

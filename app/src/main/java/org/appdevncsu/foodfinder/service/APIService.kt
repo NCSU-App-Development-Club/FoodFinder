@@ -32,7 +32,7 @@ interface APIService {
         return getMenu("eq.${menuId}")
     }
 
-    @GET("menu_sections?&select=*,menu_items(*)")
+    @GET("menu_sections?&select=*,menu_items_with_names(*)")
     suspend fun getMenu(@Query("menu_id") menuIdQuery: String): List<DiningMenuSection>
 }
 
