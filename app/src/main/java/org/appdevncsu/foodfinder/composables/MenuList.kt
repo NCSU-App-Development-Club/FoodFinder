@@ -61,7 +61,7 @@ fun MenuList(menus: List<DiningMenuListItem>, modifier: Modifier = Modifier) {
 
 @Composable
 @Preview
-fun MenuListPreview() {
+private fun MenuListPreview() {
     Box(modifier = Modifier.background(Color.White)) {
         MenuList(sampleMenuListItems)
     }
