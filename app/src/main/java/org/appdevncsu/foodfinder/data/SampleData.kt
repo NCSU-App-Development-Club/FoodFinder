@@ -1,39 +1,46 @@
 package org.appdevncsu.foodfinder.data
 
-import org.appdevncsu.foodfinder.R
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class DiningLocation(
     val name: String, // e.g. Fountain Dining Hall
-    val imageRes: Int,
+    @SerialName("id")
     val unitId: Int,
-    val menus: List<DiningMenuListItem>
 )
 
+@Serializable
 data class DiningMenuListItem(
     val date: String, // e.g. "Thursday, September 4, 2025"
     val name: String, // e.g. "Breakfast"
+    @SerialName("id")
     val menuId: Int,
-    val menu: List<DiningMenuSection>
 )
 
+@Serializable
 data class DiningMenuSection(
+    @SerialName("id")
     val sectionId: Int,
-    val name: String, // e.g. "Display Station" or "Home Style Entrée"
-    val items: List<DiningMenuItem>
+    val name: String, // e.g. "Display Station" or "Home Style Entrée",
+    @SerialName("menu_items_with_names")
+    val menuItems: List<DiningMenuItem>
 )
 
+@Serializable
 data class DiningMenuItem(
+    @SerialName("id")
+    val itemId: Int,
     val name: String, // e.g. Freshly Scrambled Eggs
     val flags: List<String>, // e.g. Halal, Vegan, Wolf Approved
-    val itemId: Int
 )
 
 val sampleMenuItems = listOf(
-    DiningMenuItem("Freshly Scrambled Eggs", emptyList(), 1),
-    DiningMenuItem("Beer Battered Cod", emptyList(), 2),
-    DiningMenuItem("Grilled Onions and Peppers", listOf("Vegetarian", "Vegan"), 3),
-    DiningMenuItem("Spinach", listOf("Vegan"), 4),
-    DiningMenuItem("Grilled Cheese Panini", listOf("Wolf Approved"), 5),
+    DiningMenuItem(1,"Freshly Scrambled Eggs", emptyList()),
+    DiningMenuItem(2,"Beer Battered Cod", emptyList()),
+    DiningMenuItem(3,"Grilled Onions and Peppers", listOf("Vegetarian", "Vegan")),
+    DiningMenuItem(4,"Spinach", listOf("Vegan")),
+    DiningMenuItem(5,"Grilled Cheese Panini", listOf("Wolf Approved")),
 )
 
 val sampleMenuSections = listOf(
@@ -43,14 +50,14 @@ val sampleMenuSections = listOf(
 )
 
 val sampleMenuListItems = listOf(
-    DiningMenuListItem("Thursday, September 18th, 2025", "Breakfast", 1, sampleMenuSections),
-    DiningMenuListItem("Thursday, September 18th, 2025", "Lunch", 2, sampleMenuSections),
-    DiningMenuListItem("Thursday, September 18th, 2025", "Dinner", 3, sampleMenuSections),
-    DiningMenuListItem("Thursday, September 19th, 2025", "Breakfast", 4, sampleMenuSections),
+    DiningMenuListItem("Thursday, September 18th, 2025", "Breakfast", 1),
+    DiningMenuListItem("Thursday, September 18th, 2025", "Lunch", 2),
+    DiningMenuListItem("Thursday, September 18th, 2025", "Dinner", 3),
+    DiningMenuListItem("Thursday, September 19th, 2025", "Breakfast", 4),
 )
 
 val sampleLocations = listOf(
-    DiningLocation("Fountain Dining Hall", R.drawable.fount, 1, sampleMenuListItems),
-    DiningLocation("Clark Dining Hall", R.drawable.clark, 2, sampleMenuListItems),
-    DiningLocation("Case Dining Hall", R.drawable.cased, unitId = 3, menus = sampleMenuListItems)
+    DiningLocation("Fountain Dining Hall", 1),
+    DiningLocation("Clark Dining Hall", 2),
+    DiningLocation("Case Dining Hall", 3)
 )

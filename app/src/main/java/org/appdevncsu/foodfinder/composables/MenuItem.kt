@@ -27,54 +27,6 @@ import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.data.DiningMenuItem
 import org.appdevncsu.foodfinder.data.sampleMenuItems
 
-
-// -------------------------------
-// Data Models
-// -------------------------------
-
-data class BadgeInfo(
-    val flagName: String,
-    val drawableRes: Int,
-    val description: String
-)
-
-// -------------------------------
-// Map of all flag: badge info
-// -------------------------------
-private val badgeMap = mapOf(
-    "Wolf Approved" to BadgeInfo("Wolf Approved", R.drawable.wolf_approved, "Wolf Approved"),
-    "Vegetarian" to BadgeInfo("Vegetarian", R.drawable.vegetarian, "Vegetarian"),
-    "Vegan" to BadgeInfo("Vegan", R.drawable.vegan, "Vegan"),
-    "Soy" to BadgeInfo("Soy", R.drawable.soy, "Contains soy"),
-    "Halal (U)" to BadgeInfo("Halal (U)", R.drawable.halal_u, "Halal (U)"),
-    "Eggs" to BadgeInfo("Eggs", R.drawable.eggs, "Contains eggs"),
-    "Contains Sesame" to BadgeInfo(
-        "Contains Sesame",
-        R.drawable.contains_sesame,
-        "Contains sesame"
-    ),
-    "Contains Seafood" to BadgeInfo(
-        "Contains Seafood",
-        R.drawable.contains_seafood,
-        "Contains seafood"
-    ),
-    "Contains Pork" to BadgeInfo("Contains Pork", R.drawable.contains_pork, "Contains pork"),
-    "Contains Nuts" to BadgeInfo("Contains Nuts", R.drawable.contains_nuts, "Contains nuts"),
-    "Contains Gluten" to BadgeInfo(
-        "Contains Gluten",
-        R.drawable.contains_gluten,
-        "Contains gluten"
-    ),
-    "Contains Dairy" to BadgeInfo("Contains Dairy", R.drawable.contains_dairy, "Contains dairy")
-)
-
-fun generateBadgeList(menuItem: DiningMenuItem): List<BadgeInfo> {
-    return menuItem.flags.mapNotNull { badgeMap[it] }
-}
-
-// -------------------------------
-// Composable UI
-// -------------------------------
 @Composable
 fun MenuItem(menuItem: DiningMenuItem, modifier: Modifier = Modifier) {
     val badges = generateBadgeList(menuItem)
@@ -96,18 +48,15 @@ fun MenuItem(menuItem: DiningMenuItem, modifier: Modifier = Modifier) {
             ) {
                 badges.forEach { badge ->
                     Image(
-                        painter = painterResource(badge.drawableRes),
-                        contentDescription = "${badge.description} Badge",
+                        painter = painterResource(badge.value),
+                        contentDescription = badge.key,
                         modifier = Modifier
                             .size(30.dp)
                             .clickable {
                                 Toast.makeText(
-                                    context,
-                                    badge.description,
-                                    3
+                                    context, badge.key, 2
                                 )
-                            }
-                    )
+                            })
                 }
             }
         }
@@ -127,4 +76,23 @@ private fun MenuItemPreview() {
     Box(modifier = Modifier.background(Color.White)) {
         MenuItem(sampleMenuItems.get(2))
     }
+}
+
+private val badgeMap = mapOf(
+    "Wolf Approved" to R.drawable.wolf_approved,
+    "Vegetarian" to R.drawable.vegetarian,
+    "Vegan" to R.drawable.vegan,
+    "Soy" to R.drawable.soy,
+    "Halal (U)" to R.drawable.halal_u,
+    "Eggs" to R.drawable.eggs,
+    "Contains Sesame" to R.drawable.contains_sesame,
+    "Contains Seafood" to R.drawable.contains_seafood,
+    "Contains Pork" to R.drawable.contains_pork,
+    "Contains Nuts" to R.drawable.contains_nuts,
+    "Contains Gluten" to R.drawable.contains_gluten,
+    "Contains Dairy" to R.drawable.contains_dairy,
+)
+
+private fun generateBadgeList(menuItem: DiningMenuItem): List<Map.Entry<String, Int>> {
+    return menuItem.flags.mapNotNull { badgeMap.entries.find { entry -> entry.key == it } }
 }

@@ -17,15 +17,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.appdevncsu.foodfinder.composables.LocationList
 import org.appdevncsu.foodfinder.composables.MenuList
 import org.appdevncsu.foodfinder.composables.MenuSectionList
 import org.appdevncsu.foodfinder.composables.TopBar
-import org.appdevncsu.foodfinder.data.sampleLocations
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +68,7 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
         NavHost(
             navController,
             modifier = Modifier.padding(innerPadding),
-            startDestination = Route.MenuList(1)
+            startDestination = Route.Home
         ) {
             composable<Route.Home> {
                 Column {
@@ -76,9 +77,8 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
             }
 
             composable<Route.MenuList> { backStackEntry ->
-                val unitID = backStackEntry.toRoute<Route.MenuList>().unitId
-                val loc = sampleLocations.first { it.unitId == unitID }
-                MenuList(loc.unitId, navController)
+                val unitId = backStackEntry.toRoute<Route.MenuList>().unitId
+                MenuList(unitId, navController)
             }
 
             composable<Route.Menu> { backStackEntry ->
