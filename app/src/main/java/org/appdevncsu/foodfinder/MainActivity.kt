@@ -69,7 +69,7 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
             startDestination = Route.MenuList(1)
         ) {
             composable<Route.Home> {
-                LocationList(sampleLocations)
+                LocationList()
             }
 
             composable<Route.MenuList> { backStackEntry ->
