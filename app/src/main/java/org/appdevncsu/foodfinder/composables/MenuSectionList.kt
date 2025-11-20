@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +34,12 @@ fun MenuSectionList(
     }
     val sections by viewModel.sections.collectAsState()
 
+    if (sections.isEmpty()) {
+        Column(modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+            Text("This menu could not be found.")
+        }
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -50,7 +57,10 @@ fun MenuSectionList(
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
 
-                    section.menuItems.forEach { menuItem ->
+                    // TODO temporary workaround for when the backend returns duplicate menu items
+                    val menuItems = section.menuItems.distinctBy { it.name }
+
+                    menuItems.forEach { menuItem ->
                         MenuItem(menuItem = menuItem)
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 8.dp),
