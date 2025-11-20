@@ -2,6 +2,7 @@ package org.appdevncsu.foodfinder.composables
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,12 +25,27 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import org.appdevncsu.foodfinder.R
-import org.appdevncsu.foodfinder.data.DiningMenuListItem
-import org.appdevncsu.foodfinder.data.sampleMenuListItems
+import org.appdevncsu.foodfinder.Route
+import org.appdevncsu.foodfinder.data.sampleLocations
+import org.appdevncsu.foodfinder.viewmodel.MenuListViewModel
 
 @Composable
-fun MenuList(menus: List<DiningMenuListItem>, modifier: Modifier = Modifier) {
+fun MenuList(
+    locationId: Int,
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    viewModel: MenuListViewModel = viewModel()
+) {
+    LaunchedEffect(locationId) {
+        viewModel.loadMenusForLocation(locationId)
+    }
+
+    val menus by viewModel.menuList.collectAsState()
+
     val dates = menus.groupBy { it.date }
     LazyColumn(modifier = modifier.padding(horizontal = 8.dp)) {
         items(dates.keys.toList()) { date ->
@@ -44,9 +63,14 @@ fun MenuList(menus: List<DiningMenuListItem>, modifier: Modifier = Modifier) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .border(1.dp, Color.LightGray, shape = RoundedCornerShape(4.dp))
+                            .clickable { navController.navigate(Route.Menu(menu.menuId)) }
                             .padding(vertical = 4.dp, horizontal = 16.dp)
                     ) {
-                        Text(fontSize = 18.sp, text = menu.name, modifier = Modifier.padding(vertical = 10.dp))
+                        Text(
+                            fontSize = 18.sp,
+                            text = menu.name,
+                            modifier = Modifier.padding(vertical = 10.dp)
+                        )
                         Icon(
                             painter = painterResource(R.drawable.keyboard_arrow_right_24px),
                             tint = Color.Black,
@@ -63,6 +87,6 @@ fun MenuList(menus: List<DiningMenuListItem>, modifier: Modifier = Modifier) {
 @Preview
 private fun MenuListPreview() {
     Box(modifier = Modifier.background(Color.White)) {
-        MenuList(sampleMenuListItems)
+        MenuList(sampleLocations.first().unitId, rememberNavController())
     }
 }

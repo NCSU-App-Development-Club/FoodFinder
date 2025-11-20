@@ -21,6 +21,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.appdevncsu.foodfinder.composables.LocationList
 import org.appdevncsu.foodfinder.composables.MenuList
+import org.appdevncsu.foodfinder.composables.MenuSectionList
 import org.appdevncsu.foodfinder.composables.TopBar
 import org.appdevncsu.foodfinder.data.sampleLocations
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
@@ -70,14 +71,14 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
         ) {
             composable<Route.Home> {
                 Column {
-                    LocationList(onLocationClick = { id -> navController.navigate(Route.MenuList(id))})
+                    LocationList(onLocationClick = { id -> navController.navigate(Route.MenuList(id)) })
                 }
             }
 
             composable<Route.MenuList> { backStackEntry ->
                 val unitID = backStackEntry.toRoute<Route.MenuList>().unitId
-                val loc = sampleLocations.first{ it.unitId == unitID }
-                MenuList(loc.menus)
+                val loc = sampleLocations.first { it.unitId == unitID }
+                MenuList(loc.unitId, navController)
             }
 
             composable<Route.Menu> { backStackEntry ->
@@ -101,10 +102,4 @@ sealed class Route {
     @Serializable
     @SerialName("menu")
     data class Menu(val menuId: Int) : Route()
-}
-
-/** Placeholder */
-@Composable
-fun MenuSectionList(menuId: Int) {
-
 }

@@ -8,9 +8,13 @@ import org.appdevncsu.foodfinder.data.DiningMenuListItem
 import org.appdevncsu.foodfinder.data.sampleMenuListItems
 
 class MenuListViewModel : ViewModel() {
+    fun loadMenusForLocation(locationId: Int) {
+        TODO("Not yet implemented")
+    }
+
     private val _menuList: MutableStateFlow<List<DiningMenuListItem>> = MutableStateFlow(emptyList())
 
-    val locations: StateFlow<List<DiningMenuListItem>> = _menuList
+    val menuList: StateFlow<List<DiningMenuListItem>> = _menuList
 
     init {
         _menuList.update { sampleMenuListItems }
