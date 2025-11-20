@@ -32,7 +32,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.data.DiningLocation
 import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
 
@@ -40,7 +42,7 @@ import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
 fun LocationList(
     onLocationClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: LocationListViewModel = viewModel(),
+    viewModel: LocationListViewModel = hiltViewModel(),
 ) {
     val locations by viewModel.locations.collectAsState()
     Column(modifier = modifier) {
@@ -71,14 +73,7 @@ fun LocationItem(
             contentColor = Color(0xFFFFFFFF)
         )
     ) {
-        Image(
-            painter = painterResource(id = location.imageRes),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(16f / 9f, matchHeightConstraintsFirst = true),
-            contentScale = ContentScale.Crop,
-        )
+        LocationImage(location.name)
 
         Row(
             modifier = Modifier
@@ -107,6 +102,25 @@ fun LocationItem(
             }
         }
     }
+}
+
+@Composable
+fun LocationImage(name: String) {
+    val image = when (name) {
+        "Case Dining Hall" -> R.drawable.cased
+        "Clark Dining Hall" -> R.drawable.clark
+        "Fountain Dining Hall" -> R.drawable.fount
+        else -> return
+    }
+
+    Image(
+        painter = painterResource(id = image),
+        contentDescription = null,
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 9f, matchHeightConstraintsFirst = true),
+        contentScale = ContentScale.Crop,
+    )
 }
 
 @Composable

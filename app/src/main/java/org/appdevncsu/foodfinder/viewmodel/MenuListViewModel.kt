@@ -1,22 +1,30 @@
 package org.appdevncsu.foodfinder.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.appdevncsu.foodfinder.data.DiningMenuListItem
 import org.appdevncsu.foodfinder.data.sampleMenuListItems
+import org.appdevncsu.foodfinder.service.APIService
+import javax.inject.Inject
 
-class MenuListViewModel : ViewModel() {
+@HiltViewModel
+class MenuListViewModel@Inject constructor(private val api: APIService) : ViewModel() {
+
     fun loadMenusForLocation(locationId: Int) {
-        TODO("Not yet implemented")
+        viewModelScope.launch {
+            _menuList.update {
+                api.getMenus(locationId)
+            }
+        }
     }
 
-    private val _menuList: MutableStateFlow<List<DiningMenuListItem>> = MutableStateFlow(emptyList())
+    private val _menuList: MutableStateFlow<List<DiningMenuListItem>> =
+        MutableStateFlow(emptyList())
 
     val menuList: StateFlow<List<DiningMenuListItem>> = _menuList
-
-    init {
-        _menuList.update { sampleMenuListItems }
-    }
 }

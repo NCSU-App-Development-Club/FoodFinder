@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.appdevncsu.foodfinder.viewmodel.MenuViewModel
 
@@ -25,7 +26,7 @@ import org.appdevncsu.foodfinder.viewmodel.MenuViewModel
 fun MenuSectionList(
     menuId: Int,
     modifier: Modifier = Modifier,
-    viewModel: MenuViewModel = viewModel()
+    viewModel: MenuViewModel = hiltViewModel()
 ) {
     LaunchedEffect(menuId) {
         viewModel.loadMenu(menuId)
@@ -49,7 +50,7 @@ fun MenuSectionList(
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
 
-                    section.items.forEach { menuItem ->
+                    section.menuItems.forEach { menuItem ->
                         MenuItem(menuItem = menuItem)
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 8.dp),
