@@ -36,7 +36,8 @@ fun TopBar(title: String, subtitle: String, modifier: Modifier = Modifier) {
             scrolledContainerColor = Color.Red,
             navigationIconContentColor = Color.White,
             titleContentColor = Color.White,
-            actionIconContentColor = Color.White
+            actionIconContentColor = Color.White,
+            subtitleContentColor = Color.White
         ),
         modifier = modifier
     )
@@ -44,6 +45,6 @@ fun TopBar(title: String, subtitle: String, modifier: Modifier = Modifier) {
 
 @Preview
 @Composable
-fun TopBarPreview() {
+private fun TopBarPreview() {
     TopBar("FoodFinder", "NCSU Dining")
 }

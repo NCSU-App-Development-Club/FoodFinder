@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -23,7 +24,6 @@ import org.appdevncsu.foodfinder.composables.MenuList
 import org.appdevncsu.foodfinder.composables.MenuSectionList
 import org.appdevncsu.foodfinder.composables.TopBar
 import org.appdevncsu.foodfinder.data.sampleLocations
-import org.appdevncsu.foodfinder.data.sampleMenuListItems
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 class MainActivity : ComponentActivity() {
@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun NavigationGraph(modifier: Modifier) {
+fun NavigationGraph(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
 
     Scaffold(modifier = modifier, topBar = {
@@ -66,16 +66,19 @@ fun NavigationGraph(modifier: Modifier) {
     }) { innerPadding ->
         NavHost(
             navController,
-            modifier = modifier.padding(innerPadding),
+            modifier = Modifier.padding(innerPadding),
             startDestination = Route.MenuList(1)
         ) {
             composable<Route.Home> {
-                LocationList()
+                Column {
+                    LocationList(onLocationClick = { id -> navController.navigate(Route.MenuList(id)) })
+                }
             }
 
             composable<Route.MenuList> { backStackEntry ->
-                val locationId = backStackEntry.toRoute<Route.MenuList>().locationId
-                MenuList(sampleMenuListItems, navController)
+                val unitID = backStackEntry.toRoute<Route.MenuList>().unitId
+                val loc = sampleLocations.first { it.unitId == unitID }
+                MenuList(loc.unitId, navController)
             }
 
             composable<Route.Menu> { backStackEntry ->
@@ -94,7 +97,7 @@ sealed class Route {
 
     @Serializable
     @SerialName("menuList")
-    data class MenuList(val locationId: Int) : Route()
+    data class MenuList(val unitId: Int) : Route()
 
     @Serializable
     @SerialName("menu")
