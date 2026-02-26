@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.appdevncsu.foodfinder.composables.LocationList
@@ -26,6 +27,7 @@ import org.appdevncsu.foodfinder.composables.TopBar
 import org.appdevncsu.foodfinder.data.sampleLocations
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

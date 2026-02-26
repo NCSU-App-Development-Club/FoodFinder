@@ -1,14 +1,18 @@
 package org.appdevncsu.foodfinder.viewmodel
 
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import org.appdevncsu.foodfinder.data.APIClient
 import org.appdevncsu.foodfinder.data.DiningMenuSection
 
 import org.appdevncsu.foodfinder.data.sampleMenuSections
+import javax.inject.Inject
 
-class MenuViewModel : ViewModel() {
+@HiltViewModel
+class MenuViewModel @Inject constructor(apiClient: APIClient) : ViewModel() {
     fun loadMenu(menuId: Int) {
         TODO("Not yet implemented")
     }

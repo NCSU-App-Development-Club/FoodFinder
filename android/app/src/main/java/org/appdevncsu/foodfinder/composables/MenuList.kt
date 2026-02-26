@@ -25,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -38,7 +39,7 @@ fun MenuList(
     locationId: Int,
     navController: NavController,
     modifier: Modifier = Modifier,
-    viewModel: MenuListViewModel = viewModel()
+    viewModel: MenuListViewModel = hiltViewModel()
 ) {
     LaunchedEffect(locationId) {
         viewModel.loadMenusForLocation(locationId)

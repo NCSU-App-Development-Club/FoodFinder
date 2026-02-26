@@ -32,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.appdevncsu.foodfinder.data.DiningLocation
 import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
@@ -40,7 +41,7 @@ import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
 fun LocationList(
     onLocationClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: LocationListViewModel = viewModel(),
+    viewModel: LocationListViewModel = hiltViewModel(),
 ) {
     val locations by viewModel.locations.collectAsState()
     Column(modifier = modifier) {
