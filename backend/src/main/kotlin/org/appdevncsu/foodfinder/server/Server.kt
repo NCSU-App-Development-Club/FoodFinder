@@ -1,11 +1,11 @@
 package org.appdevncsu.foodfinder.server
 
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.response.respond
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.appdevncsu.foodfinder.shared.Database
 
@@ -38,14 +38,18 @@ fun Application.module() {
 
 fun Application.configureRouting() {
     routing {
-        get("/locations") {
-            call.respond(Database.getLocations())
-        }
-        get("/locations/{locationId}/menus") {
-            call.respond(Database.getMenus(call.parameters["locationId"]!!.toInt()))
-        }
-        get("/menus/{menuId}") {
-            call.respond(Database.getMenu(call.parameters["menuId"]!!.toInt()))
+        route("/api") {
+            get("/locations") {
+                call.respond(mapOf("locations" to Database.getLocations()))
+            }
+            route("/locations/{locationId}/menus") {
+                get {
+                    call.respond(mapOf("menus" to Database.getMenus(call.parameters["locationId"]!!.toInt())))
+                }
+                get("/{menuId}") {
+                    call.respond(mapOf("sections" to Database.getMenu(call.parameters["menuId"]!!.toInt())))
+                }
+            }
         }
     }
 }
