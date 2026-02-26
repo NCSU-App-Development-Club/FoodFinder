@@ -17,7 +17,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:5.1.0")
     implementation("com.squareup.okhttp3:okhttp-java-net-cookiejar:5.1.0")
     implementation("com.fleeksoft.ksoup:ksoup:0.2.5")
-    implementation("com.google.code.gson:gson:2.13.1")
 
     // Server
     implementation("io.ktor:ktor-server-core:3.4.0")
@@ -25,7 +24,6 @@ dependencies {
     implementation("io.ktor:ktor-server-cio:3.4.0")
     implementation("io.ktor:ktor-server-content-negotiation:3.4.0")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
 
     // Shared
     implementation("com.h2database:h2:2.4.240")
@@ -33,7 +31,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:1.1.0")
     implementation("org.jetbrains.exposed:exposed-java-time:1.1.0")
     implementation("org.jetbrains.exposed:exposed-json:1.1.0")
-
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
 }
 
 tasks.test {

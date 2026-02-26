@@ -2,8 +2,10 @@ package org.appdevncsu.foodfinder.scraper
 
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Document
-import com.google.gson.Gson
-import com.google.gson.JsonObject
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -38,10 +40,7 @@ object HttpClient {
         return Ksoup.parse(response.body.string())
     }
 
-    fun postWithFormData(path: String, requestBody: String): JsonObject =
-        postWithFormData(path, requestBody, JsonObject::class.java)
-
-    fun <T : Any> postWithFormData(path: String, requestBody: String, responseType: Class<T>): T {
+    fun postWithFormData(path: String, requestBody: String): JsonObject {
         val body = requestBody.toRequestBody("application/x-www-form-urlencoded; charset=UTF-8".toMediaType())
         val request = Request.Builder()
             .post(body)
@@ -60,6 +59,10 @@ object HttpClient {
             error("Invalid response code: $response")
         }
 
-        return Gson().fromJson(response.body.string(), responseType)
+        val root = Json.decodeFromString<JsonObject>(response.body.string())
+        if (root["success"]?.jsonPrimitive?.boolean != true) {
+            error("success=false")
+        }
+        return root
     }
 }

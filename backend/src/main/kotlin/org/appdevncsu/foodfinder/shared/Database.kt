@@ -1,11 +1,14 @@
 package org.appdevncsu.foodfinder.shared
 
-import com.google.gson.Gson
-import com.google.gson.JsonArray
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.jsonPrimitive
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.javatime.date
-import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.batchUpsert
+import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.json
 
@@ -49,8 +52,8 @@ object Database {
         val name = varchar("name", MAX_VARCHAR_LENGTH)
         val flags = json(
             "flags",
-            { obj: List<String> -> Gson().toJson(obj) },
-            { str -> Gson().fromJson(str, JsonArray::class.java).map { it.asString } })
+            { obj: List<String> -> Json.encodeToString(obj) },
+            { str -> Json.decodeFromString<JsonArray>(str).map { it.jsonPrimitive.content } })
 
         override val primaryKey = PrimaryKey(id)
     }

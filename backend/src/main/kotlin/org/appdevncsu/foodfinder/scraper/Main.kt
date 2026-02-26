@@ -14,9 +14,12 @@ fun main() {
 
 fun runScraper() {
     val pool = Executors.newVirtualThreadPerTaskExecutor()
-    Database.init()
+    val dbInitTask = pool.submit { Database.init() }
     val locations = pool.submit(Callable { Scraper.getLocations() }).get()
-    val locDBTask = pool.submit { transaction { Database.upsertLocations(locations) } }
+    val locDBTask = pool.submit {
+        dbInitTask.get()
+        transaction { Database.upsertLocations(locations) }
+    }
 
     val futures = pool.invokeAll(locations.map { loc ->
         Callable {
@@ -28,8 +31,6 @@ fun runScraper() {
             )
         }
     })
-
-    locDBTask.get()
 
     val menus = mutableListOf<Menu>()
     val menuSections = mutableListOf<MenuSection>()
@@ -45,10 +46,13 @@ fun runScraper() {
         }
     }
 
-    println("Found ${locations.size} locations, ${menus.size} menus, " +
+    println(
+        "Found ${locations.size} locations, ${menus.size} menus, " +
             "${menuSections.size} menu sections, and ${menuItems.size} menu items " +
-            "(${menuItems.distinctBy { it.second.id }.count()} excluding duplicates).")
+            "(${menuItems.distinctBy { it.second.id }.count()} excluding duplicates)."
+    )
 
+    locDBTask.get()
     transaction { Database.upsertLocations(locations) }
     transaction { Database.upsertMenus(menus) }
     transaction { Database.upsertMenuSections(menuSections) }

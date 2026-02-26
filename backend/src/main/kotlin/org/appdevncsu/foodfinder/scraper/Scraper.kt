@@ -1,6 +1,9 @@
 package org.appdevncsu.foodfinder.scraper
 
 import com.fleeksoft.ksoup.Ksoup
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.appdevncsu.foodfinder.shared.Location
 import org.appdevncsu.foodfinder.shared.Menu
 import org.appdevncsu.foodfinder.shared.MenuItem
@@ -39,14 +42,11 @@ object Scraper {
 
     fun getMenus(unitId: Int): List<Menu> {
         val root = HttpClient.postWithFormData("/Unit/SelectUnitFromUnitsList", "unitOid=$unitId")
-        if (!root.get("success").asBoolean) {
-            error("success=false")
-        }
-
         val menuHtml =
-            root.get("panels").asJsonArray.find { it.asJsonObject.get("id").asString == "menuPanel" }?.asJsonObject?.get(
-                "html"
-            )?.asString
+            root["panels"]?.jsonArray
+                ?.find { it.jsonObject["id"]?.jsonPrimitive?.content == "menuPanel" }
+                ?.jsonObject?.get("html")
+                ?.jsonPrimitive?.content
         if (menuHtml == null) {
             error("Failed to find menu panel")
         }
@@ -75,13 +75,11 @@ object Scraper {
 
     fun getMenu(menuId: Int): List<MenuSection> {
         val root = HttpClient.postWithFormData("/Menu/SelectMenu", "menuOid=$menuId")
-        if (!root.get("success").asBoolean) {
-            error("success=false")
-        }
 
-        val itemsHtml = root.get("panels").asJsonArray
-            .find { it.asJsonObject.get("id").asString == "itemPanel" }
-            ?.asJsonObject?.get("html")?.asString
+        val itemsHtml = root["panels"]?.jsonArray
+            ?.find { it.jsonObject["id"]?.jsonPrimitive?.content == "itemPanel" }
+            ?.jsonObject?.get("html")
+            ?.jsonPrimitive?.content
 
         if (itemsHtml == null) {
             error("Failed to find item panel")
