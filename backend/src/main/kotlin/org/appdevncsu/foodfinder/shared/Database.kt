@@ -4,10 +4,8 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.javatime.date
+import org.jetbrains.exposed.v1.jdbc.*
 import org.jetbrains.exposed.v1.jdbc.Database
-import org.jetbrains.exposed.v1.jdbc.SchemaUtils
-import org.jetbrains.exposed.v1.jdbc.batchUpsert
-import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.json
 
@@ -31,13 +29,6 @@ object Database {
         override val primaryKey = PrimaryKey(id)
     }
 
-    private object MenusToSections : Table("menusMenuSections") {
-        val menuId = reference("menuId", Menus.id)
-        val sectionId = reference("sectionId", MenuSections.id)
-
-        override val primaryKey = PrimaryKey(menuId, sectionId)
-    }
-
     private object MenuSections : Table("menuSections") {
         val id = integer("id")
         val name = varchar("name", MAX_VARCHAR_LENGTH)
@@ -46,10 +37,11 @@ object Database {
     }
 
     private object SectionsToItems : Table("menuSectionsMenuItems") {
+        val menuId = reference("menuId", Menus.id)
         val sectionId = reference("sectionId", MenuSections.id)
         val itemId = reference("itemId", MenuItems.id)
 
-        override val primaryKey = PrimaryKey(sectionId, itemId)
+        override val primaryKey = PrimaryKey(sectionId, itemId, menuId)
     }
 
     private object MenuItems : Table("menuItems") {
@@ -67,7 +59,7 @@ object Database {
         Database.connect("jdbc:h2:./data.db", driver = "org.h2.Driver")
 
         transaction {
-            SchemaUtils.create(Locations, Menus, MenusToSections, MenuSections, SectionsToItems, MenuItems)
+            SchemaUtils.create(Locations, Menus, MenuSections, SectionsToItems, MenuItems)
         }
     }
 
@@ -92,21 +84,18 @@ object Database {
             this[MenuSections.id] = it.id
             this[MenuSections.name] = it.name
         }
-        MenusToSections.batchUpsert(sections) {
-            this[MenusToSections.sectionId] = it.id
-            this[MenusToSections.menuId] = it.menuId
-        }
     }
 
-    fun upsertMenuItems(items: List<MenuItem>) {
+    fun upsertMenuItems(items: List<Pair<Int /* menuId*/, MenuItem>>) {
         MenuItems.batchUpsert(items) {
-            this[MenuItems.id] = it.id
-            this[MenuItems.name] = it.name
-            this[MenuItems.flags] = it.flags
+            this[MenuItems.id] = it.second.id
+            this[MenuItems.name] = it.second.name
+            this[MenuItems.flags] = it.second.flags
         }
         SectionsToItems.batchUpsert(items) {
-            this[SectionsToItems.itemId] = it.id
-            this[SectionsToItems.sectionId] = it.sectionId
+            this[SectionsToItems.itemId] = it.second.id
+            this[SectionsToItems.sectionId] = it.second.sectionId
+            this[SectionsToItems.menuId] = it.first
         }
     }
 
@@ -130,20 +119,18 @@ object Database {
         val sections = mutableListOf<MenuSection>()
         val iterator = transaction {
             MenuItems
-                .leftJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId }
+                .innerJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId and (SectionsToItems.menuId eq menuId) }
                 .leftJoin(MenuSections) { MenuSections.id eq SectionsToItems.sectionId }
-                .innerJoin(MenusToSections) { (MenusToSections.sectionId eq MenuSections.id) and (MenusToSections.menuId eq menuId) }
                 .selectAll()
-                .orderBy(MenusToSections.sectionId to SortOrder.ASC, MenusToSections.menuId to SortOrder.ASC).toList()
+                .orderBy(MenuSections.id to SortOrder.ASC).toList()
         }
 
         var section: MenuSection? = null
         for (row in iterator) {
-            if (section == null || row[MenusToSections.sectionId] != section.id) {
+            if (section == null || row[MenuSections.id] != section.id) {
                 if (section != null) sections.add(section)
                 section = MenuSection(
-                    id = row[MenusToSections.sectionId],
-                    menuId = row[MenusToSections.menuId],
+                    id = row[MenuSections.id],
                     name = row[MenuSections.name],
                     items = mutableListOf()
                 )

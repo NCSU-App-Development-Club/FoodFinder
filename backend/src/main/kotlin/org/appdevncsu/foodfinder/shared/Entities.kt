@@ -22,7 +22,6 @@ data class Menu(
 @Serializable
 data class MenuSection(
     val id: Int,
-    val menuId: Int, // -> Menu
     val name: String, // e.g. "Display Station" or "Home Style Entrée"
     val items: List<MenuItem>
 )

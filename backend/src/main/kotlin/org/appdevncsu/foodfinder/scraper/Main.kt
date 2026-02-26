@@ -33,15 +33,21 @@ fun runScraper() {
 
     val menus = mutableListOf<Menu>()
     val menuSections = mutableListOf<MenuSection>()
-    val menuItems = mutableListOf<MenuItem>()
+    val menuItems = mutableListOf<Pair<Int /* menuId */, MenuItem>>()
 
-    for (future in futures) {
+    for (future in futures) { // For every location
         val menuFutures = future.get()
         val pairs = menuFutures.map { it.get() }
-        menus.addAll(pairs.map { it.first })
-        menuSections.addAll(pairs.map { it.second }.flatten())
-        menuItems.addAll(menuSections.map { it.items }.flatten())
+        for ((menu, sections) in pairs) { // For every menu found at that location
+            menus.add(menu)
+            menuSections.addAll(sections)
+            menuItems.addAll(sections.map { section -> section.items.map { menu.id to it } }.flatten())
+        }
     }
+
+    println("Found ${locations.size} locations, ${menus.size} menus, " +
+            "${menuSections.size} menu sections, and ${menuItems.size} menu items " +
+            "(${menuItems.distinctBy { it.second.id }.count()} excluding duplicates).")
 
     transaction { Database.upsertLocations(locations) }
     transaction { Database.upsertMenus(menus) }

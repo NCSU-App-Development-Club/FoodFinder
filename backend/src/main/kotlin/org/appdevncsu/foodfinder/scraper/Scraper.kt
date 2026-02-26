@@ -103,7 +103,7 @@ object Scraper {
             if (row.hasAttr("onclick")) {
                 // This is a category row
                 if (categoryName != null && categoryId != null) {
-                    categories.add(MenuSection(id = categoryId, menuId = menuId, name = categoryName, items = items))
+                    categories.add(MenuSection(id = categoryId, name = categoryName, items = items))
                 }
                 categoryId = sectionIdPattern.matchEntire(row.attr("onclick"))!!.groups[1]!!.value.toInt()
                 categoryName = row.text()
@@ -128,7 +128,7 @@ object Scraper {
             }
         }
 
-        categories.add(MenuSection(id = categoryId!!, menuId = menuId, name = categoryName!!, items = items))
+        categories.add(MenuSection(id = categoryId!!, name = categoryName!!, items = items))
 
         return categories
     }
