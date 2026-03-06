@@ -4,14 +4,62 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.create
+import retrofit2.http.GET
+import retrofit2.http.Path
+
+
+@Serializable data class LocationList (
+    val locations : List<Location>
+)
+
+@Serializable data class Location (
+    val name : String,
+    val id : Int
+)
+
+@Serializable data class MenuList (
+    val menus : List<Menu>
+)
+
+
+@Serializable data class Menu (
+    val name : String,
+    val id : Int,
+    val date : String,
+    val locId : Int
+)
+
+@Serializable data class SectionList (
+    val sections : List<Section>
+)
+
+@Serializable data class Section (
+    val name : String,
+    val id : Int,
+    val items : List<Item>
+)
+
+@Serializable data class Item (
+    val name : String,
+    val id : Int,
+    val secId : Int,
+    val flags : List<String>
+)
 
 interface APIClient {
-    
+    @GET("locations")
+    fun listLocations(): Call<LocationList>
+    @GET("{locId}/menus")
+    fun listMenus(@Path("locId") locId : Int) : Call<MenuList>
+    @GET("{locId}/menus/{menuId}")
+    fun listSection(@Path("locId") locID : Int, @Path("menuId") menuID : Int) : Call<SectionList>
 }
 
 @Module
