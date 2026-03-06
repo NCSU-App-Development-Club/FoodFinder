@@ -45,9 +45,13 @@ fun MenuList(
         viewModel.loadMenusForLocation(locationId)
     }
 
-    val menus by viewModel.menuList.collectAsState()
+    val menus by viewModel.
+    menuList.collectAsState()
 
-    val dates = menus.groupBy { it.date }
+
+
+    val dates = menus?.menus?.groupBy { it.date }
+    if (dates == null) return
     LazyColumn(modifier = modifier.padding(horizontal = 8.dp)) {
         items(dates.keys.toList()) { date ->
             val menus = dates[date]!!
@@ -64,7 +68,7 @@ fun MenuList(
                         modifier = Modifier
                             .fillMaxWidth()
                             .border(1.dp, Color.LightGray, shape = RoundedCornerShape(4.dp))
-                            .clickable { navController.navigate(Route.Menu(menu.menuId)) }
+                            .clickable { navController.navigate(Route.Menu(menu.id)) }
                             .padding(vertical = 4.dp, horizontal = 16.dp)
                     ) {
                         Text(
