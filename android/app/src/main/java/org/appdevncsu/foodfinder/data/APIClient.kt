@@ -15,16 +15,29 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 
+@Serializable data class LocationList (
+    val locations : List<Location>
+)
+
 @Serializable data class Location (
     val name : String,
     val id : Int
 )
+
+@Serializable data class MenuList (
+    val menus : List<Menu>
+)
+
 
 @Serializable data class Menu (
     val name : String,
     val id : Int,
     val date : String,
     val locId : Int
+)
+
+@Serializable data class SectionList (
+    val sections : List<Section>
 )
 
 @Serializable data class Section (
@@ -42,11 +55,11 @@ import retrofit2.http.Path
 
 interface APIClient {
     @GET("locations")
-    fun listLocations(): Call<List<Location>>
+    fun listLocations(): Call<LocationList>
     @GET("{locId}/menus")
-    fun listMenus(@Path("locId") locId : Int) : Call<List<Menu>>
-    @GET("{locId}/menus{menuId}")
-    fun listSection(@Path("locId") locID : Int, @Path("menuId") menuID : Int) : Call<List<Section>>
+    fun listMenus(@Path("locId") locId : Int) : Call<MenuList>
+    @GET("{locId}/menus/{menuId}")
+    fun listSection(@Path("locId") locID : Int, @Path("menuId") menuID : Int) : Call<SectionList>
 }
 
 @Module
