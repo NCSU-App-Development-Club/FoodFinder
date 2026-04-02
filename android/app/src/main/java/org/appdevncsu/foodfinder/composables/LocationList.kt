@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import org.appdevncsu.foodfinder.data.DiningLocation
+import org.appdevncsu.foodfinder.data.Location
 import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
 
 @Composable
@@ -59,27 +59,27 @@ fun LocationList(
 
 @Composable
 fun LocationItem(
-    location: DiningLocation,
+    location: Location,
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier
             .padding(vertical = 10.dp)
-            .clickable { onClick(location.unitId) },
+            .clickable { onClick(location.id) },
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFFFFFFF),
             contentColor = Color(0xFFFFFFFF)
         )
     ) {
-        Image(
-            painter = painterResource(id = location.imageRes),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(16f / 9f, matchHeightConstraintsFirst = true),
-            contentScale = ContentScale.Crop,
-        )
+//        Image(
+//            painter = painterResource(id = location.imageRes),
+//            contentDescription = null,
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .aspectRatio(16f / 9f, matchHeightConstraintsFirst = true),
+//            contentScale = ContentScale.Crop,
+//        )
 
         Row(
             modifier = Modifier

@@ -24,7 +24,6 @@ import org.appdevncsu.foodfinder.composables.LocationList
 import org.appdevncsu.foodfinder.composables.MenuList
 import org.appdevncsu.foodfinder.composables.MenuSectionList
 import org.appdevncsu.foodfinder.composables.TopBar
-import org.appdevncsu.foodfinder.data.sampleLocations
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 @AndroidEntryPoint
@@ -69,7 +68,7 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
         NavHost(
             navController,
             modifier = Modifier.padding(innerPadding),
-            startDestination = Route.MenuList(1)
+            startDestination = Route.Home
         ) {
             composable<Route.Home> {
                 Column {
@@ -79,8 +78,7 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
 
             composable<Route.MenuList> { backStackEntry ->
                 val unitID = backStackEntry.toRoute<Route.MenuList>().unitId
-                val loc = sampleLocations.first { it.unitId == unitID }
-                MenuList(loc.unitId, navController)
+                MenuList(unitID, navController)
             }
 
             composable<Route.Menu> { backStackEntry ->

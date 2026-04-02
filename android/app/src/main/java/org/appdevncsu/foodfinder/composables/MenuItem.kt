@@ -24,8 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.appdevncsu.foodfinder.R
-import org.appdevncsu.foodfinder.data.DiningMenuItem
-import org.appdevncsu.foodfinder.data.sampleMenuItems
+import org.appdevncsu.foodfinder.data.Item
 
 
 // -------------------------------
@@ -68,7 +67,7 @@ private val badgeMap = mapOf(
     "Contains Dairy" to BadgeInfo("Contains Dairy", R.drawable.contains_dairy, "Contains dairy")
 )
 
-fun generateBadgeList(menuItem: DiningMenuItem): List<BadgeInfo> {
+fun generateBadgeList(menuItem: Item): List<BadgeInfo> {
     return menuItem.flags.mapNotNull { badgeMap[it] }
 }
 
@@ -76,7 +75,7 @@ fun generateBadgeList(menuItem: DiningMenuItem): List<BadgeInfo> {
 // Composable UI
 // -------------------------------
 @Composable
-fun MenuItem(menuItem: DiningMenuItem, modifier: Modifier = Modifier) {
+fun MenuItem(menuItem: Item, modifier: Modifier = Modifier) {
     val badges = generateBadgeList(menuItem)
     val context = LocalContext.current
 
@@ -104,7 +103,7 @@ fun MenuItem(menuItem: DiningMenuItem, modifier: Modifier = Modifier) {
                                 Toast.makeText(
                                     context,
                                     badge.description,
-                                    3
+                                    Toast.LENGTH_SHORT
                                 )
                             }
                     )
@@ -121,10 +120,10 @@ fun MenuItem(menuItem: DiningMenuItem, modifier: Modifier = Modifier) {
     }
 }
 
-@Preview
-@Composable
-private fun MenuItemPreview() {
-    Box(modifier = Modifier.background(Color.White)) {
-        MenuItem(sampleMenuItems.get(2))
-    }
-}
+//@Preview
+//@Composable
+//private fun MenuItemPreview() {
+//    Box(modifier = Modifier.background(Color.White)) {
+//        MenuItem(sampleMenuItems.get(2))
+//    }
+//}
