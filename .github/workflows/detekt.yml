@@ -18,7 +18,8 @@ jobs:
           cache: gradle
 
       - name: Run detekt
-        run: ./android/gradlew detekt
+        run: ./gradlew detekt
+        working-directory: ./android
 
       - name: Upload SARIF to GitHub using the upload-sarif action
         uses: github/codeql-action/upload-sarif@v3
