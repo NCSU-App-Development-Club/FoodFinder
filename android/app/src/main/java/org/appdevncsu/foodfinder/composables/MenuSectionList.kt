@@ -38,7 +38,7 @@ fun MenuSectionList(
             .fillMaxSize()
             .padding(horizontal = 8.dp)
     ) {
-        sections.forEach { section ->
+        sections?.sections?.forEach { section ->
             item {
                 Column(
                     modifier = Modifier.padding(vertical = 16.dp),
