@@ -18,7 +18,7 @@ import javax.inject.Inject
 class MenuViewModel @Inject constructor(private val apiClient: APIClient) : ViewModel() {
     fun loadMenu(menuId: Int) {
         viewModelScope.launch {
-            val sections = apiClient.listSection(0, menuId).execute().body()
+            val sections = apiClient.listSection(0, menuId)
             _sections.update { sections }
         }
     }

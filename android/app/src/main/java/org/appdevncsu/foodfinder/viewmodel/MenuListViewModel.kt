@@ -14,18 +14,12 @@ import javax.inject.Inject
 class MenuListViewModel @Inject constructor(private val apiClient: APIClient) : ViewModel() {
     fun loadMenusForLocation(locationId: Int) {
         viewModelScope.launch {
-            val menus = apiClient.listMenus(locationId).execute().body()
+            val menus = apiClient.listMenus(locationId)
             _menuList.update { menus }
         }
     }
 
-
-
     private val _menuList: MutableStateFlow<MenuList?> = MutableStateFlow(null)
 
     val menuList: StateFlow<MenuList?> = _menuList
-
-    init {
-
-    }
 }

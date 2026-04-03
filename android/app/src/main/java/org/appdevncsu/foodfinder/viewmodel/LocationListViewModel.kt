@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.appdevncsu.foodfinder.data.APIClient
 import org.appdevncsu.foodfinder.data.Location
@@ -15,8 +16,8 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
 
     fun loadLocations() {
         viewModelScope.launch {
-                val locationsR = apiClient.listLocations().execute().body()
-                _locations.value = locationsR?.locations?: emptyList()
+            val response = apiClient.listLocations()
+            _locations.update { response.locations }
         }
     }
 
@@ -26,5 +27,4 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
     init {
         loadLocations()
     }
-
 }
