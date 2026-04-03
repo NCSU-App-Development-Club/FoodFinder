@@ -24,6 +24,8 @@ dependencies {
     implementation("io.ktor:ktor-server-cio:3.4.0")
     implementation("io.ktor:ktor-server-content-negotiation:3.4.0")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.4.0")
+    implementation("io.ktor:ktor-server-call-logging:3.4.0")
+    implementation("ch.qos.logback:logback-classic:1.5.32")
 
     // Shared
     implementation("com.h2database:h2:2.4.240")

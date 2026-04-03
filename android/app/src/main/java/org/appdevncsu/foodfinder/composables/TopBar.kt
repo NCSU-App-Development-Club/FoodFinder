@@ -26,7 +26,7 @@ fun TopBar(title: String, subtitle: String, modifier: Modifier = Modifier) {
                 )
                 Text(
                     text = subtitle,
-                    color = Color(0xCCFFFFFF),
+                    color = Color.White.copy(alpha = 0.8f),
                     fontSize = 16.sp
                 )
             }

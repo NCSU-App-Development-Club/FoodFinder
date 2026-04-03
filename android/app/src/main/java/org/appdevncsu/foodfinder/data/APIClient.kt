@@ -7,7 +7,6 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
-import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.create
@@ -33,7 +32,7 @@ import retrofit2.http.Path
     val name : String,
     val id : Int,
     val date : String,
-    val locId : Int
+    val locationId : Int
 )
 
 @Serializable data class SectionList (
@@ -49,17 +48,17 @@ import retrofit2.http.Path
 @Serializable data class Item (
     val name : String,
     val id : Int,
-    val secId : Int,
+    val sectionId : Int,
     val flags : List<String>
 )
 
 interface APIClient {
     @GET("locations")
-    fun listLocations(): Call<LocationList>
-    @GET("{locId}/menus")
-    fun listMenus(@Path("locId") locId : Int) : Call<MenuList>
-    @GET("{locId}/menus/{menuId}")
-    fun listSection(@Path("locId") locID : Int, @Path("menuId") menuID : Int) : Call<SectionList>
+    suspend fun listLocations(): LocationList
+    @GET("locations/{locId}/menus")
+    suspend fun listMenus(@Path("locId") locId : Int) : MenuList
+    @GET("locations/{locId}/menus/{menuId}")
+    suspend fun listSection(@Path("locId") locID : Int, @Path("menuId") menuID : Int) : SectionList
 }
 
 @Module

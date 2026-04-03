@@ -31,7 +31,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.Route
-import org.appdevncsu.foodfinder.data.sampleLocations
 import org.appdevncsu.foodfinder.viewmodel.MenuListViewModel
 
 @Composable
@@ -88,10 +87,10 @@ fun MenuList(
     }
 }
 
-@Composable
-@Preview
-private fun MenuListPreview() {
-    Box(modifier = Modifier.background(Color.White)) {
-        MenuList(sampleLocations.first().unitId, rememberNavController())
-    }
-}
+//@Composable
+//@Preview
+//private fun MenuListPreview() {
+//    Box(modifier = Modifier.background(Color.White)) {
+//        MenuList(Location.first().unitId, rememberNavController())
+//    }
+//}
