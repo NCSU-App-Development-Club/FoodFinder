@@ -27,58 +27,13 @@ import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.data.Item
 
 
-// -------------------------------
-// Data Models
-// -------------------------------
 
-data class BadgeInfo(
-    val flagName: String,
-    val drawableRes: Int,
-    val description: String
-)
-
-// -------------------------------
-// Map of all flag: badge info
-// -------------------------------
-private val badgeMap = mapOf(
-    "Wolf Approved" to BadgeInfo("Wolf Approved", R.drawable.wolf_approved, "Wolf Approved"),
-    "Vegetarian" to BadgeInfo("Vegetarian", R.drawable.vegetarian, "Vegetarian"),
-    "Vegan" to BadgeInfo("Vegan", R.drawable.vegan, "Vegan"),
-    "Soy" to BadgeInfo("Soy", R.drawable.soy, "Contains soy"),
-    "Halal (U)" to BadgeInfo("Halal (U)", R.drawable.halal_u, "Halal (U)"),
-    "Eggs" to BadgeInfo("Eggs", R.drawable.eggs, "Contains eggs"),
-    "Contains Sesame" to BadgeInfo(
-        "Contains Sesame",
-        R.drawable.contains_sesame,
-        "Contains sesame"
-    ),
-    "Contains Seafood" to BadgeInfo(
-        "Contains Seafood",
-        R.drawable.contains_seafood,
-        "Contains seafood"
-    ),
-    "Contains Pork" to BadgeInfo("Contains Pork", R.drawable.contains_pork, "Contains pork"),
-    "Contains Nuts" to BadgeInfo("Contains Nuts", R.drawable.contains_nuts, "Contains nuts"),
-    "Contains Gluten" to BadgeInfo(
-        "Contains Gluten",
-        R.drawable.contains_gluten,
-        "Contains gluten"
-    ),
-    "Contains Dairy" to BadgeInfo("Contains Dairy", R.drawable.contains_dairy, "Contains dairy")
-)
-
-fun generateBadgeList(menuItem: Item): List<BadgeInfo> {
-    return menuItem.flags.mapNotNull { badgeMap[it] }
-}
 
 // -------------------------------
 // Composable UI
 // -------------------------------
 @Composable
 fun MenuItem(menuItem: Item, modifier: Modifier = Modifier) {
-    val badges = generateBadgeList(menuItem)
-    val context = LocalContext.current
-
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -86,29 +41,8 @@ fun MenuItem(menuItem: Item, modifier: Modifier = Modifier) {
     ) {
         Column {
             Text(text = menuItem.name, style = MaterialTheme.typography.bodyLarge)
-
             Spacer(modifier = Modifier.height(4.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                badges.forEach { badge ->
-                    Image(
-                        painter = painterResource(badge.drawableRes),
-                        contentDescription = "${badge.description} Badge",
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clickable {
-                                Toast.makeText(
-                                    context,
-                                    badge.description,
-                                    Toast.LENGTH_SHORT
-                                )
-                            }
-                    )
-                }
-            }
+            BadgeList(menuItem)
         }
 
         Icon(

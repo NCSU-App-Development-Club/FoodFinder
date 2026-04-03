@@ -68,8 +68,8 @@ fun LocationItem(
             .padding(vertical = 10.dp)
             .clickable { onClick(location.id) },
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFFFFFF),
-            contentColor = Color(0xFFFFFFFF)
+            containerColor = Color.White,
+            contentColor = Color.White
         )
     ) {
 //        Image(
@@ -89,7 +89,7 @@ fun LocationItem(
         ) {
             Text(
                 text = location.name,
-                modifier = Modifier.fillMaxWidth(0.8f),
+                modifier = Modifier.fillMaxWidth(fraction = 0.8f),
                 fontSize = 20.sp,
                 color = Color.Black
             )
@@ -99,7 +99,7 @@ fun LocationItem(
                     .width(60.dp)
                     .height(28.dp)
                     .clip(RoundedCornerShape(percent = 50))
-                    .background(Color(0xFF006400)),
+                    .background(Color.Green),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
