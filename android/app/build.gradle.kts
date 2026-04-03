@@ -87,7 +87,7 @@ detekt {
     toolVersion = libs.plugins.detekt.get().version.toString()
     config.setFrom(file("../detekt.yml"))
     buildUponDefaultConfig = true
-    basePath = rootProject.projectDir.absolutePath
+    basePath = rootProject.projectDir.parentFile.absolutePath
 }
 
 val reportMerge by tasks.registering(io.gitlab.arturbosch.detekt.report.ReportMergeTask::class) {
