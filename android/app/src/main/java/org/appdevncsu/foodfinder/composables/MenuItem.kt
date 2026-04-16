@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,16 +41,17 @@ fun MenuItem(menuItem: Item, modifier: Modifier = Modifier) {
     ) {
         Row {
             Text(text = menuItem.name, style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.width(4.dp))
             BadgeList(menuItem)
         }
 
-        Icon(
-            painter = painterResource(R.drawable.favorite_24px),
-            contentDescription = "Favorite",
-            modifier = Modifier.size(24.dp),
-            tint = Color.Red
-        )
+        // Icon(
+          //  painter = painterResource(R.drawable.favorite_24px),
+          //  contentDescription = "Favorite",
+           // modifier = Modifier.size(24.dp),
+          //  tint = Color.Red
+        // )
+        //
     }
 }
 
