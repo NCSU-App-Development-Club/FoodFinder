@@ -63,7 +63,7 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
             }
         }
 
-        TopBar(title, subtitle)
+        TopBar(title, subtitle, navController)
     }) { innerPadding ->
         NavHost(
             navController,
