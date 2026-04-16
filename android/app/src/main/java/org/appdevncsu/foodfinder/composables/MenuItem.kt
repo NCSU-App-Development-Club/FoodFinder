@@ -39,11 +39,10 @@ fun MenuItem(menuItem: Item, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.fillMaxWidth()
     ) {
-        Row {
+       // Row {
             Text(text = menuItem.name, style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.width(4.dp))
             BadgeList(menuItem)
-        }
+       // }
 
         // Icon(
           //  painter = painterResource(R.drawable.favorite_24px),
