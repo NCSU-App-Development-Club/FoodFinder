@@ -19,7 +19,7 @@ fun Badge(badge: BadgeInfo, modifier: Modifier = Modifier) {
         painter = painterResource(badge.drawableRes),
         contentDescription = "${badge.description} Badge",
         modifier = modifier
-            .size(15.dp)
+            .size(24.dp)
             .clickable {
                 Toast.makeText(
                     context,
