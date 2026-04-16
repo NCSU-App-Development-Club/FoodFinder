@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.data.Item
@@ -39,7 +38,7 @@ fun MenuItem(menuItem: Item, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.fillMaxWidth()
     ) {
-        Column {
+        Row {
             Text(text = menuItem.name, style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(4.dp))
             BadgeList(menuItem)
