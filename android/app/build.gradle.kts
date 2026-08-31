@@ -1,10 +1,8 @@
 import io.gitlab.arturbosch.detekt.Detekt
 import org.gradle.kotlin.dsl.detekt
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.detekt)
@@ -14,7 +12,7 @@ plugins {
 
 android {
     namespace = "org.appdevncsu.foodfinder"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "org.appdevncsu.foodfinder"
@@ -38,9 +36,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
-    }
-    kotlin.compilerOptions {
-        jvmTarget = JvmTarget.JVM_21
     }
     buildFeatures {
         compose = true
@@ -80,7 +75,7 @@ dependencies {
 
 tasks.withType<Detekt>().configureEach {
     reports.sarif.required = true
-    reports.sarif.outputLocation = rootProject.projectDir.resolve("detekt-report.sarif")
+    reports.sarif.outputLocation.set(rootProject.layout.projectDirectory.file("detekt-report.sarif"))
 }
 
 detekt {
@@ -90,7 +85,7 @@ detekt {
     basePath = rootProject.projectDir.parentFile.absolutePath
 }
 
-val reportMerge by tasks.registering(io.gitlab.arturbosch.detekt.report.ReportMergeTask::class) {
+val reportMerge = tasks.register<io.gitlab.arturbosch.detekt.report.ReportMergeTask>("reportMerge") {
     output.set(rootProject.layout.buildDirectory.file("reports/detekt/merge.sarif"))
 }
 
