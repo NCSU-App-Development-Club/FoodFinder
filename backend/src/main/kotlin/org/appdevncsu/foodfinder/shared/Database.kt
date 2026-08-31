@@ -11,6 +11,7 @@ import org.jetbrains.exposed.v1.jdbc.batchUpsert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.json
+import java.time.LocalDate
 
 object Database {
 
@@ -112,9 +113,12 @@ object Database {
 
     fun getMenus(locationId: Int): List<Menu> {
         return transaction {
-            Menus.selectAll().where { Menus.locationId eq locationId }.map {
-                Menu(it[Menus.id], it[Menus.locationId], it[Menus.date], it[Menus.name])
-            }
+            Menus.selectAll()
+                .where {
+                    (Menus.locationId eq locationId) and (Menus.date greaterEq LocalDate.now())
+                }.map {
+                    Menu(it[Menus.id], it[Menus.locationId], it[Menus.date], it[Menus.name])
+                }
         }
     }
 
