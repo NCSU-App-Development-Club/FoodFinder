@@ -52,6 +52,10 @@ fun Application.module() {
 
 fun Application.configureRouting() {
     routing {
+        // Liveness probe for Kamal's healthcheck (expects 200 on /up).
+        get("/up") {
+            call.respond(HttpStatusCode.OK)
+        }
         route("/api") {
             get("/locations") {
                 // Only changes when the scrapers learn something new, so clients can cache it.
