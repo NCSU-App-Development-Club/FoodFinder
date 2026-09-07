@@ -5,6 +5,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.appdevncsu.foodfinder.shared.dataDir
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -13,7 +14,7 @@ class CachedImage(val bytes: ByteArray, val contentType: String?)
 object Images {
     private const val IMAGE_HOST = "dining.ncsu.edu"
     private val client = OkHttpClient.Builder()
-        .cache(Cache(File("image-cache"), 64L * 1024 * 1024))
+        .cache(Cache(File(dataDir(), "image-cache"), 64L * 1024 * 1024))
         .callTimeout(30, TimeUnit.SECONDS)
         .build()
 

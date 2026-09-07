@@ -26,6 +26,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.5.2")
     implementation("io.ktor:ktor-server-call-logging:3.5.2")
     implementation("ch.qos.logback:logback-classic:1.6.3")
+    implementation("org.quartz-scheduler:quartz:2.5.0")
 
     // Shared
     implementation("com.h2database:h2:2.4.240")
@@ -34,6 +35,10 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:1.4.0")
     implementation("org.jetbrains.exposed:exposed-json:1.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+
+    testImplementation(platform("org.junit:junit-bom:5.12.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.test {

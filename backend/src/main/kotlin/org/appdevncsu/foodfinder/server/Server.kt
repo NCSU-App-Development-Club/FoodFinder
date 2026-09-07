@@ -25,6 +25,11 @@ fun runServer() {
     Server.start()
 }
 
+fun runServerScheduled() {
+    startDailyScrapeScheduler()
+    Server.start()
+}
+
 object Server {
     fun start() {
         Database.init()

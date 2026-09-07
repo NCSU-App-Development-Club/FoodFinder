@@ -15,9 +15,13 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.json
+import java.io.File
 import java.time.LocalDate
+import java.util.concurrent.atomic.AtomicBoolean
 
 object Database {
+
+    private val initialized = AtomicBoolean(false)
 
     private const val MAX_VARCHAR_LENGTH = 128
 
@@ -92,7 +96,9 @@ object Database {
     }
 
     fun init() {
-        Database.connect("jdbc:h2:./data.db", driver = "org.h2.Driver")
+        if (!initialized.compareAndSet(false, true)) return
+        val dbPath = File(dataDir(), "data.db").path
+        Database.connect("jdbc:h2:$dbPath", driver = "org.h2.Driver")
 
         transaction {
             SchemaUtils.create(
