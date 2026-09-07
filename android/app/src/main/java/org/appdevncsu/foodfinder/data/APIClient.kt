@@ -21,6 +21,7 @@ import retrofit2.http.Path
     val name : String,
     val id : Int,
     val slug : String? = null,
+    val type : String? = null,
     val imageUrl : String? = null
 ) {
     val absoluteImageUrl : String?

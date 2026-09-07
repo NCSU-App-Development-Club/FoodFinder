@@ -11,8 +11,20 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.appdevncsu.foodfinder.data.APIClient
 import org.appdevncsu.foodfinder.data.LocationListItem
+import org.appdevncsu.foodfinder.data.LocationStatus
 import org.appdevncsu.foodfinder.data.currentStatus
 import javax.inject.Inject
+
+private val typeOrder = listOf("dining-halls", "food-courts", "restaurants", "cafes", "markets")
+
+private val locationComparator =
+    compareByDescending<LocationListItem> {
+        it.status is LocationStatus.Open || it.status is LocationStatus.ClosingSoon
+    }
+        .thenBy { item ->
+            item.location.type?.let(typeOrder::indexOf)?.takeIf { it >= 0 } ?: typeOrder.size
+        }
+        .thenBy { it.location.name }
 
 @HiltViewModel
 class LocationListViewModel @Inject constructor(private val apiClient: APIClient) : ViewModel() {
@@ -22,11 +34,12 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
             coroutineScope {
                 val locationsDeferred = async { apiClient.listLocations() }
                 val hoursDeferred = async { runCatching { apiClient.listHours() }.getOrNull() }
-                val hoursBySlug = hoursDeferred.await()?.locations?.associate { it.slug to it.hours }
+                val hoursBySlug =
+                    hoursDeferred.await()?.locations?.associate { it.slug to it.hours }
                 _locations.update {
                     locationsDeferred.await().locations.map { location ->
                         LocationListItem(location, currentStatus(hoursBySlug?.get(location.slug)))
-                    }
+                    }.sortedWith(locationComparator)
                 }
             }
         }
