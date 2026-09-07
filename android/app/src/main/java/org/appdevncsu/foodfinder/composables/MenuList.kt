@@ -29,6 +29,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.Route
+import org.appdevncsu.foodfinder.data.Menu
 import org.appdevncsu.foodfinder.data.MenuList
 import org.appdevncsu.foodfinder.viewmodel.MenuListViewModel
 
@@ -130,10 +131,16 @@ private fun MenuListLoadingPreview() {
     MenuListContent(menus = null, navController = rememberNavController())
 }
 
-//@Composable
-//@Preview
-//private fun MenuListPreview() {
-//    Box(modifier = Modifier.background(Color.White)) {
-//        MenuList(Location.first().unitId, rememberNavController())
-//    }
-//}
+private val SampleMenuList = MenuList(
+    menus = listOf(
+        Menu(name = "Breakfast", id = 1, date = "Monday, Sep 7", locationId = 1),
+        Menu(name = "Lunch", id = 2, date = "Monday, Sep 7", locationId = 1),
+        Menu(name = "Dinner", id = 3, date = "Tuesday, Sep 8", locationId = 1),
+    )
+)
+
+@Composable
+@Preview(showBackground = true)
+private fun MenuListPreview() {
+    MenuListContent(menus = SampleMenuList, navController = rememberNavController())
+}

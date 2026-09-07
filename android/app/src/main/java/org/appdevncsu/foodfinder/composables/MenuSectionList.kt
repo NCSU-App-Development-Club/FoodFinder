@@ -1,9 +1,7 @@
 package org.appdevncsu.foodfinder.composables
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,12 +23,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import org.appdevncsu.foodfinder.R
+import org.appdevncsu.foodfinder.data.Item
+import org.appdevncsu.foodfinder.data.Section
 import org.appdevncsu.foodfinder.data.SectionList
 import org.appdevncsu.foodfinder.viewmodel.MenuViewModel
 
@@ -147,12 +146,45 @@ private fun SkeletonMenuSection(modifier: Modifier = Modifier) {
     }
 }
 
-@Preview
+private val SampleSections = SectionList(
+    sections = listOf(
+        Section(
+            name = "Entrees",
+            id = 1,
+            items = listOf(
+                Item(
+                    name = "Grilled Chicken Sandwich",
+                    id = 1,
+                    sectionId = 1,
+                    flags = listOf("Wolf Approved", "Contains Gluten", "Contains Dairy")
+                ),
+                Item(
+                    name = "Black Bean Burger",
+                    id = 2,
+                    sectionId = 1,
+                    flags = listOf("Wolf Approved", "Vegetarian", "Vegan")
+                ),
+            )
+        ),
+        Section(
+            name = "Sides",
+            id = 2,
+            items = listOf(
+                Item(
+                    name = "Seasoned Fries",
+                    id = 3,
+                    sectionId = 2,
+                    flags = listOf("Vegetarian")
+                ),
+            )
+        ),
+    )
+)
+
 @Composable
+@Preview(showBackground = true)
 private fun MenuSectionListPreview() {
-    Box(modifier = Modifier.background(Color.White)) {
-        MenuSectionList(menuId = 1)
-    }
+    MenuSectionListContent(sections = SampleSections)
 }
 
 @Composable
