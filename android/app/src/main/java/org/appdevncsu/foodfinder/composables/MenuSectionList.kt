@@ -47,11 +47,12 @@ private val SkeletonItemBadgeBarHeight = 18.dp
 @Composable
 fun MenuSectionList(
     menuId: Int,
+    locationId: Int,
     modifier: Modifier = Modifier,
     viewModel: MenuViewModel = hiltViewModel()
 ) {
-    LaunchedEffect(menuId) {
-        viewModel.loadMenu(menuId)
+    LaunchedEffect(menuId, locationId) {
+        viewModel.loadMenu(menuId, locationId)
     }
     val sections by viewModel.sections.collectAsState()
 

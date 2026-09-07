@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.appdevncsu.foodfinder.data.APIClient
 import org.appdevncsu.foodfinder.data.MenuList
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -16,7 +17,20 @@ class MenuListViewModel @Inject constructor(private val apiClient: APIClient) : 
         viewModelScope.launch {
             val menus = apiClient.listMenus(locationId)
             _menuList.update { menus }
+            prefetchTodayMenus(menus)
         }
+    }
+
+    // Warms the HTTP cache so today's menus render instantly when opened
+    private fun prefetchTodayMenus(menus: MenuList) {
+        val today = LocalDate.now().toString()
+        menus.menus
+            .filter { it.date == today }
+            .forEach { menu ->
+                viewModelScope.launch {
+                    runCatching { apiClient.listSection(menu.locationId, menu.id) }
+                }
+            }
     }
 
     private val _menuList: MutableStateFlow<MenuList?> = MutableStateFlow(null)

@@ -70,7 +70,7 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
                 subtitle = formatMenuDate(route.date),
                 onBack = { navController.navigateUp() },
             ) {
-                MenuSectionList(route.menuId)
+                MenuSectionList(route.menuId, route.locationId)
             }
         }
     }
@@ -88,5 +88,5 @@ sealed class Route {
 
     @Serializable
     @SerialName("menu")
-    data class Menu(val menuId: Int, val menuName: String, val date: String) : Route()
+    data class Menu(val menuId: Int, val menuName: String, val date: String, val locationId: Int) : Route()
 }
