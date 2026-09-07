@@ -15,7 +15,8 @@ sealed interface LocationStatus {
 
 data class LocationListItem(
     val location: Location,
-    val status: LocationStatus,
+    // Null while the hours list is still loading; the UI shows a skeleton in its place.
+    val status: LocationStatus?,
 )
 
 private const val ClosingSoonWindowMinutes = 30
