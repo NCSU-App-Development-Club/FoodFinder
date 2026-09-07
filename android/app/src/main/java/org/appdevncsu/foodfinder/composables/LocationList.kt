@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -26,10 +27,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -46,6 +47,8 @@ import coil3.compose.LocalAsyncImagePreviewHandler
 import org.appdevncsu.foodfinder.data.Location
 import org.appdevncsu.foodfinder.data.LocationListItem
 import org.appdevncsu.foodfinder.data.LocationStatus
+import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
+import org.appdevncsu.foodfinder.ui.theme.foodFinderExtended
 import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
 
 private const val LocationImageAspectRatio = 16f / 9f
@@ -122,8 +125,7 @@ fun LocationItem(
             .padding(vertical = 10.dp)
             .clickable { onClick(location) },
         colors = CardDefaults.cardColors(
-            containerColor = Color.White,
-            contentColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         )
     ) {
         location.absoluteImageUrl?.let { imageUrl ->
@@ -155,7 +157,7 @@ private fun LocationInfoRow(name: String, status: LocationStatus?, isHoursLoadin
                 text = name,
                 fontSize = 20.sp,
                 lineHeight = NameTextLineHeight,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onSurface
             )
             LocationStatusText(status, isHoursLoading)
         }
@@ -189,7 +191,7 @@ private fun LocationStatusText(status: LocationStatus?, isHoursLoading: Boolean,
             text = status.rawText,
             fontSize = 14.sp,
             lineHeight = StatusTextLineHeight,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
@@ -198,10 +200,16 @@ private fun LocationStatusText(status: LocationStatus?, isHoursLoading: Boolean,
 
 @Composable
 private fun LocationStatusBadge(status: LocationStatus, modifier: Modifier = Modifier) {
+    val colorScheme = MaterialTheme.colorScheme
+    val extended = MaterialTheme.foodFinderExtended
     val pill = when (status) {
-        is LocationStatus.Open -> Triple(Color.Blue, Color.White, "Open")
-        is LocationStatus.ClosingSoon -> Triple(Color.Yellow, Color.Black, "Closing")
-        is LocationStatus.Closed -> Triple(Color.Red, Color.White, "Closed")
+        is LocationStatus.Open -> Triple(extended.statusOpen, extended.onStatusOpen, "Open")
+        is LocationStatus.ClosingSoon -> Triple(
+            extended.statusClosingSoon,
+            extended.onStatusClosingSoon,
+            "Closing"
+        )
+        is LocationStatus.Closed -> Triple(colorScheme.error, colorScheme.onError, "Closed")
         is LocationStatus.Unavailable -> null
     }
     if (pill == null) return
@@ -228,8 +236,7 @@ private fun SkeletonLocationItem(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.padding(vertical = 10.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White,
-            contentColor = Color.White
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         )
     ) {
         SkeletonBar(
@@ -277,32 +284,40 @@ private val SampleLocation = Location(
     imageUrl = "/api/locations/fountain/image",
 )
 
-private val PreviewImageColor = Color(0xFF66BB6A)
-
 // Coil consults this handler only in the preview environment, so real loads are unaffected.
 @OptIn(ExperimentalCoilApi::class)
 @Composable
-private fun WithPreviewImages(content: @Composable () -> Unit) {
-    val previewHandler = AsyncImagePreviewHandler { ColorImage(PreviewImageColor.toArgb()) }
-    CompositionLocalProvider(LocalAsyncImagePreviewHandler provides previewHandler) {
-        content()
+private fun WithPreviewImages(
+    darkTheme: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    FoodFinderTheme(darkTheme = darkTheme) {
+        val placeholder = MaterialTheme.colorScheme.primaryContainer
+        val previewHandler = AsyncImagePreviewHandler { ColorImage(placeholder.toArgb()) }
+        CompositionLocalProvider(LocalAsyncImagePreviewHandler provides previewHandler) {
+            content()
+        }
     }
 }
 
 @Composable
 @Preview(showBackground = true)
 private fun LocationListLoadingPreview() {
-    LocationListContent(LocationListViewModel.UiState(loading = true), onLocationClick = {})
+    FoodFinderTheme {
+        LocationListContent(LocationListViewModel.UiState(loading = true), onLocationClick = {})
+    }
 }
 
 @Composable
 @Preview(showBackground = true)
 private fun LocationListErrorPreview() {
-    LocationListContent(
-        LocationListViewModel.UiState(error = "No internet connection. Check your connection and try again."),
-        onLocationClick = {},
-        onRetry = {},
-    )
+    FoodFinderTheme {
+        LocationListContent(
+            LocationListViewModel.UiState(error = "No internet connection. Check your connection and try again."),
+            onLocationClick = {},
+            onRetry = {},
+        )
+    }
 }
 
 @Composable
@@ -385,6 +400,19 @@ private fun LocationItemHoursMissingPreview() {
 @Preview(showBackground = true)
 private fun LocationItemHoursLoadedPreview() {
     WithPreviewImages {
+        LocationItem(
+            SampleLocation,
+            status = LocationStatus.Open("7:00am - 9:00pm"),
+            onClick = {},
+            modifier = Modifier.padding(horizontal = 8.dp),
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+private fun LocationItemHoursLoadedDarkPreview() {
+    WithPreviewImages(darkTheme = true) {
         LocationItem(
             SampleLocation,
             status = LocationStatus.Open("7:00am - 9:00pm"),

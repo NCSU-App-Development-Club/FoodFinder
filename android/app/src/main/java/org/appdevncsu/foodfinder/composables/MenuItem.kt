@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.appdevncsu.foodfinder.data.Item
+import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 @Composable
 fun MenuItem(menuItem: Item, modifier: Modifier = Modifier) {
@@ -30,5 +31,7 @@ private val SampleMenuItem = Item(
 @Preview(showBackground = true)
 @Composable
 private fun MenuItemPreview() {
-    MenuItem(menuItem = SampleMenuItem)
+    FoodFinderTheme {
+        MenuItem(menuItem = SampleMenuItem)
+    }
 }

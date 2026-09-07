@@ -13,14 +13,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 
 private const val SkeletonPulseDurationMillis = 600
 private const val SkeletonPulseMinAlpha = 0.25f
 private const val SkeletonPulseMaxAlpha = 0.65f
-private val SkeletonBaseColor = Color.Gray
 internal val SkeletonBarShape = RoundedCornerShape(4.dp)
 
 @Composable
@@ -37,6 +36,6 @@ fun SkeletonBar(modifier: Modifier = Modifier, shape: Shape = SkeletonBarShape) 
     Box(
         modifier = modifier
             .clip(shape)
-            .background(SkeletonBaseColor.copy(alpha = pulse))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = pulse))
     )
 }

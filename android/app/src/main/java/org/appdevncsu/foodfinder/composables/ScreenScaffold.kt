@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.appdevncsu.foodfinder.R
+import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,19 +77,23 @@ fun ScreenScaffold(
 @Preview(showBackground = true)
 @Composable
 private fun ScreenScaffoldPreview() {
-    ScreenScaffold(
-        title = "Fountain Dining Hall",
-        subtitle = "Today",
-        onBack = {},
-    ) {
-        Text("Content")
+    FoodFinderTheme {
+        ScreenScaffold(
+            title = "Fountain Dining Hall",
+            subtitle = "Today",
+            onBack = {},
+        ) {
+            Text("Content")
+        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun ScreenScaffoldNoSubtitlePreview() {
-    ScreenScaffold(title = "FoodFinder") {
-        Text("Content")
+    FoodFinderTheme {
+        ScreenScaffold(title = "FoodFinder") {
+            Text("Content")
+        }
     }
 }

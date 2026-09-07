@@ -31,6 +31,7 @@ import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.data.Item
 import org.appdevncsu.foodfinder.data.Section
 import org.appdevncsu.foodfinder.data.SectionList
+import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 import org.appdevncsu.foodfinder.viewmodel.MenuViewModel
 
 private const val ExpandedChevronRotationDegrees = 90f
@@ -206,19 +207,25 @@ private val SampleSections = SectionList(
 @Composable
 @Preview(showBackground = true)
 private fun MenuSectionListPreview() {
-    MenuSectionListContent(state = MenuViewModel.UiState(sections = SampleSections))
+    FoodFinderTheme {
+        MenuSectionListContent(state = MenuViewModel.UiState(sections = SampleSections))
+    }
 }
 
 @Composable
 @Preview(showBackground = true)
 private fun MenuSectionListLoadingPreview() {
-    MenuSectionListContent(state = MenuViewModel.UiState(loading = true))
+    FoodFinderTheme {
+        MenuSectionListContent(state = MenuViewModel.UiState(loading = true))
+    }
 }
 
 @Composable
 @Preview(showBackground = true)
 private fun MenuSectionListErrorPreview() {
-    MenuSectionListContent(
-        state = MenuViewModel.UiState(error = "Server error. Please try again later."),
-    )
+    FoodFinderTheme {
+        MenuSectionListContent(
+            state = MenuViewModel.UiState(error = "Server error. Please try again later."),
+        )
+    }
 }

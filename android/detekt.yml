@@ -28,8 +28,8 @@ Compose:
     # treatAsLambda: MyLambdaType
   CompositionLocalAllowlist:
     active: true
-    # -- You can optionally define a list of CompositionLocals that are allowed here
-    # allowedCompositionLocals: LocalSomething,LocalSomethingElse
+    # App theme extension holding semantic colors (status pills, skeleton).
+    allowedCompositionLocals: LocalFoodFinderExtendedColors
   CompositionLocalNaming:
     active: true
   ContentEmitterReturningValues:

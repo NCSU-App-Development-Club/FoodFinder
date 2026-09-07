@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,7 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import android.content.res.Configuration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +34,7 @@ import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.Route
 import org.appdevncsu.foodfinder.data.Menu
 import org.appdevncsu.foodfinder.data.MenuList
+import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 import org.appdevncsu.foodfinder.viewmodel.MenuListViewModel
 import java.time.LocalDate
 
@@ -99,32 +101,46 @@ private fun MenuListContent(
                 ) {
                     Text(fontSize = 24.sp, text = formatMenuDate(date))
                     for (menu in menus) {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .border(1.dp, Color.LightGray, shape = RoundedCornerShape(4.dp))
-                                .clickable {
-                                    navController.navigate(Route.Menu(menu.id, menu.name, menu.date, menu.locationId))
-                                }
-                                .padding(vertical = 4.dp, horizontal = 16.dp)
-                        ) {
-                            Text(
-                                fontSize = 18.sp,
-                                text = menu.name,
-                                modifier = Modifier.padding(vertical = 10.dp)
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.keyboard_arrow_right_24px),
-                                tint = Color.Black,
-                                contentDescription = null
-                            )
-                        }
+                        MenuRow(
+                            menu = menu,
+                            onClick = {
+                                navController.navigate(
+                                    Route.Menu(menu.id, menu.name, menu.date, menu.locationId)
+                                )
+                            },
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MenuRow(menu: Menu, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(4.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp, horizontal = 16.dp)
+    ) {
+        Text(
+            fontSize = 18.sp,
+            text = menu.name,
+            modifier = Modifier.padding(vertical = 10.dp)
+        )
+        Icon(
+            painter = painterResource(R.drawable.keyboard_arrow_right_24px),
+            tint = MaterialTheme.colorScheme.onSurface,
+            contentDescription = null
+        )
     }
 }
 
@@ -138,13 +154,13 @@ private fun EmptyMenuState(modifier: Modifier = Modifier) {
         Icon(
             painter = painterResource(R.drawable.restaurant_menu_24px),
             contentDescription = null,
-            tint = Color.LightGray,
+            tint = MaterialTheme.colorScheme.outlineVariant,
             modifier = Modifier.size(64.dp)
         )
         Text(
             text = "No menus available for this location",
             fontSize = 16.sp,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
     }
@@ -174,28 +190,34 @@ private fun SkeletonMenuGroup(modifier: Modifier = Modifier) {
 @Composable
 @Preview(showBackground = true)
 private fun MenuListLoadingPreview() {
-    MenuListContent(
-        state = MenuListViewModel.UiState(loading = true),
-        navController = rememberNavController(),
-    )
+    FoodFinderTheme {
+        MenuListContent(
+            state = MenuListViewModel.UiState(loading = true),
+            navController = rememberNavController(),
+        )
+    }
 }
 
 @Composable
 @Preview(showBackground = true)
 private fun MenuListEmptyPreview() {
-    MenuListContent(
-        state = MenuListViewModel.UiState(menuList = MenuList(menus = emptyList())),
-        navController = rememberNavController(),
-    )
+    FoodFinderTheme {
+        MenuListContent(
+            state = MenuListViewModel.UiState(menuList = MenuList(menus = emptyList())),
+            navController = rememberNavController(),
+        )
+    }
 }
 
 @Composable
 @Preview(showBackground = true)
 private fun MenuListErrorPreview() {
-    MenuListContent(
-        state = MenuListViewModel.UiState(error = "No internet connection. Check your connection and try again."),
-        navController = rememberNavController(),
-    )
+    FoodFinderTheme {
+        MenuListContent(
+            state = MenuListViewModel.UiState(error = "No internet connection. Check your connection and try again."),
+            navController = rememberNavController(),
+        )
+    }
 }
 
 private val SampleMenuList = MenuList(
@@ -210,8 +232,21 @@ private val SampleMenuList = MenuList(
 @Composable
 @Preview(showBackground = true)
 private fun MenuListPreview() {
-    MenuListContent(
-        state = MenuListViewModel.UiState(menuList = SampleMenuList),
-        navController = rememberNavController(),
-    )
+    FoodFinderTheme {
+        MenuListContent(
+            state = MenuListViewModel.UiState(menuList = SampleMenuList),
+            navController = rememberNavController(),
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+private fun MenuListDarkPreview() {
+    FoodFinderTheme(darkTheme = true) {
+        MenuListContent(
+            state = MenuListViewModel.UiState(menuList = SampleMenuList),
+            navController = rememberNavController(),
+        )
+    }
 }

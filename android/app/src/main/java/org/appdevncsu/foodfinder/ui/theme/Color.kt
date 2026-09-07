@@ -2,10 +2,24 @@ package org.appdevncsu.foodfinder.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Brand colors
+val PrimaryLight = Color(0xFFCC0000)
+val OnPrimaryLight = Color(0xFFFFFFFF)
+val PrimaryContainerLight = Color(0xFFFFDAD7)
+val OnPrimaryContainerLight = Color(0xFF410001)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val PrimaryDark = Color(0xFFFFB3AC)
+val OnPrimaryDark = Color(0xFF680003)
+val PrimaryContainerDark = Color(0xFF93000C)
+val OnPrimaryContainerDark = Color(0xFFFFDAD7)
+
+// Location status pill colors
+val StatusOpenLight = Color(0xFF2E7D32)
+val OnStatusOpenLight = Color(0xFFFFFFFF)
+val StatusClosingSoonLight = Color(0xFFFFC107)
+val OnStatusClosingSoonLight = Color(0xFF1C1B1F)
+
+val StatusOpenDark = Color(0xFF81C784)
+val OnStatusOpenDark = Color(0xFF00390F)
+val StatusClosingSoonDark = Color(0xFFFFD54F)
+val OnStatusClosingSoonDark = Color(0xFF221A00)
