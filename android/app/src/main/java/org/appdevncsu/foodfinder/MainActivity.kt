@@ -18,6 +18,7 @@ import org.appdevncsu.foodfinder.composables.LocationList
 import org.appdevncsu.foodfinder.composables.MenuList
 import org.appdevncsu.foodfinder.composables.MenuSectionList
 import org.appdevncsu.foodfinder.composables.ScreenScaffold
+import org.appdevncsu.foodfinder.composables.formatMenuDate
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 @AndroidEntryPoint
@@ -66,7 +67,7 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
             val route = backStackEntry.toRoute<Route.Menu>()
             ScreenScaffold(
                 title = route.menuName,
-                subtitle = route.date,
+                subtitle = formatMenuDate(route.date),
                 onBack = { navController.navigateUp() },
             ) {
                 MenuSectionList(route.menuId)

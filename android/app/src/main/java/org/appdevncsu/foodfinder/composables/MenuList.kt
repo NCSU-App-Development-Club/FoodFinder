@@ -34,6 +34,7 @@ import org.appdevncsu.foodfinder.Route
 import org.appdevncsu.foodfinder.data.Menu
 import org.appdevncsu.foodfinder.data.MenuList
 import org.appdevncsu.foodfinder.viewmodel.MenuListViewModel
+import java.time.LocalDate
 
 private const val MenuListSkeletonGroupCount = 2
 private const val MenuListSkeletonRowsPerGroup = 3
@@ -74,14 +75,14 @@ private fun MenuListContent(
                 EmptyMenuState(modifier = Modifier.fillParentMaxSize())
             }
         } else {
-            items(dates.keys.toList()) { date ->
+            items(dates.keys.sorted()) { date ->
                 val menus = dates[date]!!
 
                 Column(
                     modifier = Modifier.padding(vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(fontSize = 24.sp, text = date)
+                    Text(fontSize = 24.sp, text = formatMenuDate(date))
                     for (menu in menus) {
                         Row(
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -169,9 +170,10 @@ private fun MenuListEmptyPreview() {
 
 private val SampleMenuList = MenuList(
     menus = listOf(
-        Menu(name = "Breakfast", id = 1, date = "Monday, Sep 7", locationId = 1),
-        Menu(name = "Lunch", id = 2, date = "Monday, Sep 7", locationId = 1),
-        Menu(name = "Dinner", id = 3, date = "Tuesday, Sep 8", locationId = 1),
+        Menu(name = "Breakfast", id = 1, date = LocalDate.now().toString(), locationId = 1),
+        Menu(name = "Lunch", id = 2, date = LocalDate.now().toString(), locationId = 1),
+        Menu(name = "Dinner", id = 3, date = LocalDate.now().plusDays(1).toString(), locationId = 1),
+        Menu(name = "Brunch", id = 4, date = LocalDate.now().plusDays(2).toString(), locationId = 1),
     )
 )
 
