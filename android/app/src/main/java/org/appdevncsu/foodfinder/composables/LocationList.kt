@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,12 +24,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import org.appdevncsu.foodfinder.data.Location
+import org.appdevncsu.foodfinder.data.LocationStatus
 import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
 
 private const val LocationImageAspectRatio = 16f / 9f
@@ -45,9 +46,10 @@ fun LocationList(
     val locations by viewModel.locations.collectAsState()
     Column(modifier = modifier) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(locations) { location ->
+            items(locations) { item ->
                 LocationItem(
-                    location,
+                    item.location,
+                    item.status,
                     onLocationClick,
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
@@ -59,6 +61,7 @@ fun LocationList(
 @Composable
 fun LocationItem(
     location: Location,
+    status: LocationStatus,
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -86,28 +89,52 @@ fun LocationItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 15.dp, horizontal = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = location.name,
-                modifier = Modifier.fillMaxWidth(fraction = 0.8f),
-                fontSize = 20.sp,
-                color = Color.Black
-            )
-
-            Box(
-                modifier = Modifier
-                    .width(60.dp)
-                    .height(28.dp)
-                    .clip(RoundedCornerShape(percent = 50))
-                    .background(Color.Green),
-                contentAlignment = Alignment.Center
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "status >"
+                    text = location.name,
+                    fontSize = 20.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = status.rawText,
+                    fontSize = 14.sp,
+                    color = Color.Gray,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+
+            LocationStatusBadge(status, modifier = Modifier.padding(start = 12.dp))
         }
+    }
+}
+
+@Composable
+private fun LocationStatusBadge(status: LocationStatus, modifier: Modifier = Modifier) {
+    val pill = when (status) {
+        is LocationStatus.Open -> Triple(Color.Blue, Color.White, "Open")
+        is LocationStatus.ClosingSoon -> Triple(Color.Yellow, Color.Black, "Closing")
+        is LocationStatus.Closed -> Triple(Color.Red, Color.White, "Closed")
+        is LocationStatus.Unavailable -> null
+    }
+    if (pill == null) return
+    val (background, contentColor, text) = pill
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(percent = 50))
+            .background(background)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = contentColor,
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center
+        )
     }
 }
 

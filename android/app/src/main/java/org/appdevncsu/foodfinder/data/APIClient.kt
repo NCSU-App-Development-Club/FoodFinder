@@ -20,11 +20,31 @@ import retrofit2.http.Path
 @Serializable data class Location (
     val name : String,
     val id : Int,
+    val slug : String? = null,
     val imageUrl : String? = null
 ) {
     val absoluteImageUrl : String?
         get() = imageUrl?.let { "${APIClientModule.API_ORIGIN}$it" }
 }
+
+@Serializable data class HoursList (
+    val date : String,
+    val locations : List<LocationHours>
+)
+
+@Serializable data class LocationHours (
+    val slug : String,
+    val name : String,
+    val type : String,
+    val hours : List<HoursRange>
+)
+
+@Serializable data class HoursRange (
+    val status : String,
+    val openMinute : Int? = null,
+    val closeMinute : Int? = null,
+    val rawText : String
+)
 
 @Serializable data class MenuList (
     val menus : List<Menu>
@@ -62,6 +82,8 @@ interface APIClient {
     suspend fun listMenus(@Path("locId") locId : Int) : MenuList
     @GET("locations/{locId}/menus/{menuId}")
     suspend fun listSection(@Path("locId") locID : Int, @Path("menuId") menuID : Int) : SectionList
+    @GET("hours")
+    suspend fun listHours(): HoursList
 }
 
 @Module
