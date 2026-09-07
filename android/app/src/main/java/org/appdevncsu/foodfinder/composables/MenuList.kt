@@ -53,20 +53,35 @@ fun MenuList(
         viewModel.loadMenusForLocation(locationId)
     }
 
-    val menus by viewModel.menuList.collectAsState()
+    val state by viewModel.uiState.collectAsState()
 
-    MenuListContent(menus, navController, modifier)
+    MenuListContent(
+        state = state,
+        navController = navController,
+        onRetry = { viewModel.retry(locationId) },
+        modifier = modifier,
+    )
 }
 
 @Composable
 private fun MenuListContent(
-    menus: MenuList?,
+    state: MenuListViewModel.UiState,
     navController: NavController,
     modifier: Modifier = Modifier,
+    onRetry: () -> Unit = {},
 ) {
+    val menus = state.menuList
     val dates = menus?.menus?.groupBy { it.date }
     LazyColumn(modifier = modifier.padding(horizontal = 8.dp)) {
-        if (dates == null) {
+        if (state.error != null && menus == null) {
+            item {
+                ErrorState(
+                    message = state.error,
+                    onRetry = onRetry,
+                    modifier = Modifier.fillParentMaxSize(),
+                )
+            }
+        } else if (dates == null) {
             items(MenuListSkeletonGroupCount) {
                 SkeletonMenuGroup()
             }
@@ -159,13 +174,28 @@ private fun SkeletonMenuGroup(modifier: Modifier = Modifier) {
 @Composable
 @Preview(showBackground = true)
 private fun MenuListLoadingPreview() {
-    MenuListContent(menus = null, navController = rememberNavController())
+    MenuListContent(
+        state = MenuListViewModel.UiState(loading = true),
+        navController = rememberNavController(),
+    )
 }
 
 @Composable
 @Preview(showBackground = true)
 private fun MenuListEmptyPreview() {
-    MenuListContent(menus = MenuList(menus = emptyList()), navController = rememberNavController())
+    MenuListContent(
+        state = MenuListViewModel.UiState(menuList = MenuList(menus = emptyList())),
+        navController = rememberNavController(),
+    )
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun MenuListErrorPreview() {
+    MenuListContent(
+        state = MenuListViewModel.UiState(error = "No internet connection. Check your connection and try again."),
+        navController = rememberNavController(),
+    )
 }
 
 private val SampleMenuList = MenuList(
@@ -180,5 +210,8 @@ private val SampleMenuList = MenuList(
 @Composable
 @Preview(showBackground = true)
 private fun MenuListPreview() {
-    MenuListContent(menus = SampleMenuList, navController = rememberNavController())
+    MenuListContent(
+        state = MenuListViewModel.UiState(menuList = SampleMenuList),
+        navController = rememberNavController(),
+    )
 }

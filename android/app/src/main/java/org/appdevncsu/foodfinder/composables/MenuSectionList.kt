@@ -54,21 +54,37 @@ fun MenuSectionList(
     LaunchedEffect(menuId, locationId) {
         viewModel.loadMenu(menuId, locationId)
     }
-    val sections by viewModel.sections.collectAsState()
+    val state by viewModel.uiState.collectAsState()
 
-    MenuSectionListContent(sections, modifier)
+    MenuSectionListContent(
+        state = state,
+        onRetry = { viewModel.retry(menuId, locationId) },
+        modifier = modifier,
+    )
 }
 
 @Composable
 private fun MenuSectionListContent(
-    sections: SectionList?,
+    state: MenuViewModel.UiState,
     modifier: Modifier = Modifier,
+    onRetry: () -> Unit = {},
 ) {
+    val sections = state.sections
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 8.dp)
     ) {
+        if (state.error != null && sections == null) {
+            item {
+                ErrorState(
+                    message = state.error,
+                    onRetry = onRetry,
+                    modifier = Modifier.fillParentMaxSize(),
+                )
+            }
+            return@LazyColumn
+        }
         if (sections == null) {
             items(MenuSectionListSkeletonCount) {
                 SkeletonMenuSection()
@@ -78,41 +94,46 @@ private fun MenuSectionListContent(
 
         sections.sections.forEach { section ->
             item {
-                var expanded by rememberSaveable { mutableStateOf(true) }
-                Column(
-                    modifier = Modifier.padding(
-                        top = 16.dp,
-                        bottom = if (expanded) 16.dp else 4.dp
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { expanded = !expanded }
-                            .padding(bottom = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = section.name,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Icon(
-                            painter = painterResource(R.drawable.keyboard_arrow_right_24px),
-                            contentDescription = null,
-                            modifier = Modifier.rotate(
-                                if (expanded) ExpandedChevronRotationDegrees else 0f
-                            )
-                        )
-                    }
+                ExpandableMenuSection(section = section)
+            }
+        }
+    }
+}
 
-                    if (expanded) {
-                        section.items.forEach { menuItem ->
-                            MenuItem(menuItem = menuItem)
-                        }
-                    }
-                }
+@Composable
+private fun ExpandableMenuSection(section: Section, modifier: Modifier = Modifier) {
+    var expanded by rememberSaveable { mutableStateOf(true) }
+    Column(
+        modifier = modifier.padding(
+            top = 16.dp,
+            bottom = if (expanded) 16.dp else 4.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = section.name,
+                style = MaterialTheme.typography.titleLarge
+            )
+            Icon(
+                painter = painterResource(R.drawable.keyboard_arrow_right_24px),
+                contentDescription = null,
+                modifier = Modifier.rotate(
+                    if (expanded) ExpandedChevronRotationDegrees else 0f
+                )
+            )
+        }
+
+        if (expanded) {
+            section.items.forEach { menuItem ->
+                MenuItem(menuItem = menuItem)
             }
         }
     }
@@ -185,11 +206,19 @@ private val SampleSections = SectionList(
 @Composable
 @Preview(showBackground = true)
 private fun MenuSectionListPreview() {
-    MenuSectionListContent(sections = SampleSections)
+    MenuSectionListContent(state = MenuViewModel.UiState(sections = SampleSections))
 }
 
 @Composable
 @Preview(showBackground = true)
 private fun MenuSectionListLoadingPreview() {
-    MenuSectionListContent(sections = null)
+    MenuSectionListContent(state = MenuViewModel.UiState(loading = true))
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun MenuSectionListErrorPreview() {
+    MenuSectionListContent(
+        state = MenuViewModel.UiState(error = "Server error. Please try again later."),
+    )
 }

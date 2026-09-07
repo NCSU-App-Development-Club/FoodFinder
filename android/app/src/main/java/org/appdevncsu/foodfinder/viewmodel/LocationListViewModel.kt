@@ -17,6 +17,8 @@ import org.appdevncsu.foodfinder.data.Location
 import org.appdevncsu.foodfinder.data.LocationListItem
 import org.appdevncsu.foodfinder.data.LocationStatus
 import org.appdevncsu.foodfinder.data.currentStatus
+import org.appdevncsu.foodfinder.data.logApiError
+import org.appdevncsu.foodfinder.data.userMessageFor
 import javax.inject.Inject
 
 private const val DiningHallType = "dining-halls"
@@ -38,17 +40,20 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
     data class UiState(
         val loading: Boolean = false,
         val items: List<LocationListItem> = emptyList(),
+        val error: String? = null,
     )
 
     private val _locations = MutableStateFlow<List<Location>?>(null)
     private val _hoursBySlug = MutableStateFlow<Map<String, List<HoursRange>>?>(null)
+    private val _error = MutableStateFlow<String?>(null)
 
-    val uiState: StateFlow<UiState> = combine(_locations, _hoursBySlug) { locations, hours ->
+    val uiState: StateFlow<UiState> = combine(_locations, _hoursBySlug, _error) { locations, hours, error ->
         UiState(
-            loading = locations == null,
+            loading = locations == null && error == null,
             items = (locations ?: emptyList())
                 .map { LocationListItem(it, hours?.get(it.slug)?.let(::currentStatus)) }
-                .sortedWith(locationComparator)
+                .sortedWith(locationComparator),
+            error = error,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState(loading = true))
 
@@ -58,14 +63,32 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
 
     fun loadLocations() {
         viewModelScope.launch {
+            _locations.value = null
+            _hoursBySlug.value = null
+            _error.value = null
             coroutineScope {
                 val locationsDeferred = async { runCatching { apiClient.listLocations() } }
                 val hoursDeferred = async { runCatching { apiClient.listHours() } }
-                val locations = locationsDeferred.await().getOrNull()?.locations ?: emptyList()
-                val hoursBySlug = hoursDeferred.await().getOrNull()
+                val locationsResult = locationsDeferred.await()
+                val hoursResult = hoursDeferred.await()
+                val locations = locationsResult.getOrNull()?.locations
+                if (locations == null) {
+                    _locations.value = emptyList()
+                    _hoursBySlug.value = emptyMap()
+                    val error = locationsResult.exceptionOrNull()
+                    if (error != null) {
+                        logApiError(TAG, error)
+                    }
+                    _error.value = error?.let(::userMessageFor)
+                        ?: "Something went wrong. Please try again."
+                    return@coroutineScope
+                }
+                hoursResult.exceptionOrNull()?.let { logApiError(TAG, it) }
+                val hoursBySlug = hoursResult.getOrNull()
                     ?.locations
                     ?.associate { it.slug to it.hours }
                 _locations.value = locations
+                // Hours are non-fatal: missing hours just render as "Hours unavailable".
                 _hoursBySlug.value = hoursBySlug ?: emptyMap()
                 prefetchOpenDiningHallMenus(locations, hoursBySlug)
             }
@@ -85,10 +108,15 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
             .forEach { location ->
                 viewModelScope.launch {
                     runCatching { apiClient.listMenus(location.id) }
+                        .onFailure { logApiError(TAG, it) }
                 }
             }
     }
 
     private fun isOpen(status: LocationStatus) =
         status is LocationStatus.Open || status is LocationStatus.ClosingSoon
+
+    private companion object {
+        const val TAG = "LocationListViewModel"
+    }
 }

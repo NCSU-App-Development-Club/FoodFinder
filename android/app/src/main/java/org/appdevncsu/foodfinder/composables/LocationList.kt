@@ -68,7 +68,12 @@ fun LocationList(
     viewModel: LocationListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
-    LocationListContent(state, onLocationClick, modifier)
+    LocationListContent(
+        state = state,
+        onLocationClick = onLocationClick,
+        onRetry = viewModel::loadLocations,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -76,7 +81,16 @@ private fun LocationListContent(
     state: LocationListViewModel.UiState,
     onLocationClick: (Location) -> Unit,
     modifier: Modifier = Modifier,
+    onRetry: () -> Unit = {},
 ) {
+    if (state.error != null && state.items.isEmpty()) {
+        ErrorState(
+            message = state.error,
+            onRetry = onRetry,
+            modifier = modifier.fillMaxSize(),
+        )
+        return
+    }
     LazyColumn(modifier = modifier.fillMaxSize()) {
         if (state.loading) {
             items(LocationSkeletonCount) {
@@ -274,6 +288,16 @@ private fun WithPreviewImages(content: @Composable () -> Unit) {
 @Preview(showBackground = true)
 private fun LocationListLoadingPreview() {
     LocationListContent(LocationListViewModel.UiState(loading = true), onLocationClick = {})
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun LocationListErrorPreview() {
+    LocationListContent(
+        LocationListViewModel.UiState(error = "No internet connection. Check your connection and try again."),
+        onLocationClick = {},
+        onRetry = {},
+    )
 }
 
 @Composable
