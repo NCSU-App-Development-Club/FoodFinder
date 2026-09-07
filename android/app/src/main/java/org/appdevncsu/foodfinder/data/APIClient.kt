@@ -13,15 +13,18 @@ import retrofit2.create
 import retrofit2.http.GET
 import retrofit2.http.Path
 
-
 @Serializable data class LocationList (
     val locations : List<Location>
 )
 
 @Serializable data class Location (
     val name : String,
-    val id : Int
-)
+    val id : Int,
+    val imageUrl : String? = null
+) {
+    val absoluteImageUrl : String?
+        get() = imageUrl?.let { "${APIClientModule.API_ORIGIN}$it" }
+}
 
 @Serializable data class MenuList (
     val menus : List<Menu>
@@ -65,7 +68,8 @@ interface APIClient {
 @InstallIn(SingletonComponent::class)
 internal object APIClientModule {
 
-    private const val BASE_URL = "https://foodfinder-api.appdevncsu.org/api/"
+    internal const val API_ORIGIN = "https://foodfinder-api.appdevncsu.org"
+    private const val BASE_URL = "$API_ORIGIN/api/"
 
     private val json = Json { ignoreUnknownKeys = true }
 

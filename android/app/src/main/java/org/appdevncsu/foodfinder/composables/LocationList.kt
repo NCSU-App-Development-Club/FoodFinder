@@ -1,7 +1,5 @@
 package org.appdevncsu.foodfinder.composables
 
-
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,14 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import org.appdevncsu.foodfinder.data.Location
 import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
+
+private const val LocationImageAspectRatio = 16f / 9f
 
 @Composable
 fun LocationList(
@@ -72,14 +71,16 @@ fun LocationItem(
             contentColor = Color.White
         )
     ) {
-//        Image(
-//            painter = painterResource(id = location.imageRes),
-//            contentDescription = null,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .aspectRatio(16f / 9f, matchHeightConstraintsFirst = true),
-//            contentScale = ContentScale.Crop,
-//        )
+        location.absoluteImageUrl?.let { imageUrl ->
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = location.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(LocationImageAspectRatio, matchHeightConstraintsFirst = true),
+                contentScale = ContentScale.Crop,
+            )
+        }
 
         Row(
             modifier = Modifier

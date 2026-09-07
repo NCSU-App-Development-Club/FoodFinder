@@ -63,6 +63,9 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
 
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.kotlinx.serialization)
 
