@@ -4,9 +4,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -42,6 +49,12 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
         navController,
         modifier = modifier,
         startDestination = Route.Home,
+        enterTransition = { forwardEnterTransition() },
+        exitTransition = { forwardExitTransition() },
+        popEnterTransition = { backEnterTransition() },
+        popExitTransition = { backExitTransition() },
+        predictivePopEnterTransition = { backEnterTransition() },
+        predictivePopExitTransition = { backExitTransition() },
     ) {
         composable<Route.Home> {
             ScreenScaffold(title = "FoodFinder") {
@@ -75,6 +88,32 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
         }
     }
 }
+
+private const val NavTransitionDurationMillis = 300
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.forwardEnterTransition(): EnterTransition =
+    slideIntoContainer(
+        towards = AnimatedContentTransitionScope.SlideDirection.Start,
+        animationSpec = tween(NavTransitionDurationMillis),
+    ) + fadeIn(animationSpec = tween(NavTransitionDurationMillis))
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.forwardExitTransition(): ExitTransition =
+    slideOutOfContainer(
+        towards = AnimatedContentTransitionScope.SlideDirection.Start,
+        animationSpec = tween(NavTransitionDurationMillis),
+    ) + fadeOut(animationSpec = tween(NavTransitionDurationMillis))
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.backEnterTransition(): EnterTransition =
+    slideIntoContainer(
+        towards = AnimatedContentTransitionScope.SlideDirection.End,
+        animationSpec = tween(NavTransitionDurationMillis),
+    ) + fadeIn(animationSpec = tween(NavTransitionDurationMillis))
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.backExitTransition(): ExitTransition =
+    slideOutOfContainer(
+        towards = AnimatedContentTransitionScope.SlideDirection.End,
+        animationSpec = tween(NavTransitionDurationMillis),
+    ) + fadeOut(animationSpec = tween(NavTransitionDurationMillis))
 
 @Serializable
 sealed class Route {
