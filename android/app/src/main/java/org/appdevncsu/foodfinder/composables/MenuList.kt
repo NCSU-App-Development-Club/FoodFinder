@@ -89,7 +89,9 @@ private fun MenuListContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .border(1.dp, Color.LightGray, shape = RoundedCornerShape(4.dp))
-                                .clickable { navController.navigate(Route.Menu(menu.id)) }
+                                .clickable {
+                                    navController.navigate(Route.Menu(menu.id, menu.name, menu.date))
+                                }
                                 .padding(vertical = 4.dp, horizontal = 16.dp)
                         ) {
                             Text(

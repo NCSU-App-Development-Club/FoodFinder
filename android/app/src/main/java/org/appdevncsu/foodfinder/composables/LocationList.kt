@@ -63,7 +63,7 @@ private val BadgeSkeletonHeight = 30.dp
 
 @Composable
 fun LocationList(
-    onLocationClick: (Int) -> Unit,
+    onLocationClick: (Location) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: LocationListViewModel = hiltViewModel(),
 ) {
@@ -74,7 +74,7 @@ fun LocationList(
 @Composable
 private fun LocationListContent(
     state: LocationListViewModel.UiState,
-    onLocationClick: (Int) -> Unit,
+    onLocationClick: (Location) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier.fillMaxSize()) {
@@ -98,13 +98,13 @@ private fun LocationListContent(
 fun LocationItem(
     location: Location,
     status: LocationStatus?,
-    onClick: (Int) -> Unit,
+    onClick: (Location) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier
             .padding(vertical = 10.dp)
-            .clickable { onClick(location.id) },
+            .clickable { onClick(location) },
         colors = CardDefaults.cardColors(
             containerColor = Color.White,
             contentColor = Color.White
