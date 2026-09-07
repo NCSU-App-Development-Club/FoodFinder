@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,6 +69,10 @@ private fun MenuListContent(
             items(MenuListSkeletonGroupCount) {
                 SkeletonMenuGroup()
             }
+        } else if (dates.isEmpty()) {
+            item {
+                EmptyMenuState(modifier = Modifier.fillParentMaxSize())
+            }
         } else {
             items(dates.keys.toList()) { date ->
                 val menus = dates[date]!!
@@ -105,6 +111,28 @@ private fun MenuListContent(
 }
 
 @Composable
+private fun EmptyMenuState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.restaurant_menu_24px),
+            contentDescription = null,
+            tint = Color.LightGray,
+            modifier = Modifier.size(64.dp)
+        )
+        Text(
+            text = "No menus available for this location",
+            fontSize = 16.sp,
+            color = Color.Gray,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
 private fun SkeletonMenuGroup(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.padding(vertical = 16.dp),
@@ -129,6 +157,12 @@ private fun SkeletonMenuGroup(modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 private fun MenuListLoadingPreview() {
     MenuListContent(menus = null, navController = rememberNavController())
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun MenuListEmptyPreview() {
+    MenuListContent(menus = MenuList(menus = emptyList()), navController = rememberNavController())
 }
 
 private val SampleMenuList = MenuList(
