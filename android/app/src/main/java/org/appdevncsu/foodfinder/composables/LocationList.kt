@@ -103,6 +103,7 @@ private fun LocationListContent(
                 item.status,
                 onLocationClick,
                 modifier = Modifier.padding(horizontal = 8.dp),
+                isHoursLoading = state.hoursLoading,
             )
         }
     }
@@ -114,6 +115,7 @@ fun LocationItem(
     status: LocationStatus?,
     onClick: (Location) -> Unit,
     modifier: Modifier = Modifier,
+    isHoursLoading: Boolean = true,
 ) {
     Card(
         modifier = modifier
@@ -135,12 +137,12 @@ fun LocationItem(
             )
         }
 
-        LocationInfoRow(location.name, status)
+        LocationInfoRow(location.name, status, isHoursLoading)
     }
 }
 
 @Composable
-private fun LocationInfoRow(name: String, status: LocationStatus?) {
+private fun LocationInfoRow(name: String, status: LocationStatus?, isHoursLoading: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -155,16 +157,18 @@ private fun LocationInfoRow(name: String, status: LocationStatus?) {
                 lineHeight = NameTextLineHeight,
                 color = Color.Black
             )
-            LocationStatusText(status)
+            LocationStatusText(status, isHoursLoading)
         }
 
         if (status == null) {
-            SkeletonBar(
-                modifier = Modifier
-                    .padding(start = 12.dp)
-                    .size(BadgeSkeletonWidth, BadgeSkeletonHeight),
-                shape = SkeletonPillShape,
-            )
+            if (isHoursLoading) {
+                SkeletonBar(
+                    modifier = Modifier
+                        .padding(start = 12.dp)
+                        .size(BadgeSkeletonWidth, BadgeSkeletonHeight),
+                    shape = SkeletonPillShape,
+                )
+            }
         } else {
             LocationStatusBadge(status, modifier = Modifier.padding(start = 12.dp))
         }
@@ -172,8 +176,9 @@ private fun LocationInfoRow(name: String, status: LocationStatus?) {
 }
 
 @Composable
-private fun LocationStatusText(status: LocationStatus?, modifier: Modifier = Modifier) {
+private fun LocationStatusText(status: LocationStatus?, isHoursLoading: Boolean, modifier: Modifier = Modifier) {
     if (status == null) {
+        if (!isHoursLoading) return
         SkeletonBar(
             modifier = modifier
                 .height(statusLineHeight())
@@ -326,6 +331,31 @@ private fun LocationListHoursLoadingPreview() {
 
 @Composable
 @Preview(showBackground = true)
+private fun LocationListHoursMissingPreview() {
+    WithPreviewImages {
+        LocationListContent(
+            LocationListViewModel.UiState(
+                hoursLoading = false,
+                items = listOf(
+                    LocationListItem(SampleLocation, status = null),
+                    LocationListItem(
+                        SampleLocation.copy(
+                            id = 2,
+                            name = "Clark Dining Hall",
+                            slug = "clark",
+                            imageUrl = "/api/locations/clark/image",
+                        ),
+                        status = LocationStatus.Open("7:00am - 9:00pm"),
+                    ),
+                )
+            ),
+            onLocationClick = {},
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
 private fun LocationItemHoursLoadingPreview() {
     WithPreviewImages {
         LocationItem(
@@ -333,6 +363,20 @@ private fun LocationItemHoursLoadingPreview() {
             status = null,
             onClick = {},
             modifier = Modifier.padding(horizontal = 8.dp),
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun LocationItemHoursMissingPreview() {
+    WithPreviewImages {
+        LocationItem(
+            SampleLocation,
+            status = null,
+            onClick = {},
+            modifier = Modifier.padding(horizontal = 8.dp),
+            isHoursLoading = false,
         )
     }
 }

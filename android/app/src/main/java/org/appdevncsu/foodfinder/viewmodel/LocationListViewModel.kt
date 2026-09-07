@@ -39,6 +39,7 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
 
     data class UiState(
         val loading: Boolean = false,
+        val hoursLoading: Boolean = true,
         val items: List<LocationListItem> = emptyList(),
         val error: String? = null,
     )
@@ -50,6 +51,7 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
     val uiState: StateFlow<UiState> = combine(_locations, _hoursBySlug, _error) { locations, hours, error ->
         UiState(
             loading = locations == null && error == null,
+            hoursLoading = hours == null,
             items = (locations ?: emptyList())
                 .map { LocationListItem(it, hours?.get(it.slug)?.let(::currentStatus)) }
                 .sortedWith(locationComparator),
