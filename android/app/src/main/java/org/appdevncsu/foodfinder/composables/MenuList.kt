@@ -74,7 +74,12 @@ private fun MenuListContent(
 ) {
     val menus = state.menuList
     val dates = menus?.menus?.groupBy { it.date }
-    LazyColumn(modifier = modifier.padding(horizontal = 8.dp)) {
+    LazyColumn(
+        modifier = modifier
+            .padding(horizontal = 8.dp)
+            .consumeBottomNavBarInsets(),
+        contentPadding = bottomNavBarContentPadding(),
+    ) {
         if (state.error != null && menus == null) {
             item {
                 ErrorState(

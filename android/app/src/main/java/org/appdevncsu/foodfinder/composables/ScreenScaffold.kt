@@ -1,6 +1,7 @@
 package org.appdevncsu.foodfinder.composables
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -55,11 +56,16 @@ fun ScreenScaffold(
                 scrollBehavior = scrollBehavior,
             )
         },
+        // Top and horizontal insets are applied here. The bottom
+        // inset is left for scrolling content so lists can draw behind the
+        // transparent gesture bar.
+        contentWindowInsets = scaffoldContentWindowInsets,
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding),
         ) {
             subtitle?.let {
                 Text(

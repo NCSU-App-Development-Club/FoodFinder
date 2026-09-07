@@ -90,11 +90,18 @@ private fun LocationListContent(
         ErrorState(
             message = state.error,
             onRetry = onRetry,
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier
+                .fillMaxSize()
+                .padBottomNavBarInsets(),
         )
         return
     }
-    LazyColumn(modifier = modifier.fillMaxSize()) {
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .consumeBottomNavBarInsets(),
+        contentPadding = bottomNavBarContentPadding(),
+    ) {
         if (state.loading) {
             items(LocationSkeletonCount) {
                 SkeletonLocationItem(modifier = Modifier.padding(horizontal = 8.dp))

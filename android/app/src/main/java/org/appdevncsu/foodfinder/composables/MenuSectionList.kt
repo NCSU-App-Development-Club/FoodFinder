@@ -75,6 +75,8 @@ private fun MenuSectionListContent(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 8.dp)
+            .consumeBottomNavBarInsets(),
+        contentPadding = bottomNavBarContentPadding(),
     ) {
         if (state.error != null && sections == null) {
             item {
