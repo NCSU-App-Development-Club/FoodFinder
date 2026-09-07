@@ -76,13 +76,16 @@ fun Application.configureRouting() {
             }
             route("/locations/{locationId}/menus") {
                 get {
+                    call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
                     call.respond(mapOf("menus" to Database.getMenus(call.parameters["locationId"]!!.toInt())))
                 }
                 get("/{menuId}") {
+                    call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
                     call.respond(mapOf("sections" to Database.getMenu(call.parameters["menuId"]!!.toInt())))
                 }
             }
             get("/hours") {
+                call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
                 val dateParam = call.request.queryParameters["date"]
                 val date = if (dateParam == null) {
                     LocalDate.now(NCSU_ZONE)
