@@ -15,12 +15,21 @@ fun main() {
 fun runScraper() {
     val pool = Executors.newVirtualThreadPerTaskExecutor()
     val dbInitTask = pool.submit { Database.init() }
-    val locations = pool.submit(Callable { Scraper.getLocations() }).get()
+    val locationsTask = pool.submit(Callable { Scraper.getLocations() })
     val locDBTask = pool.submit {
         dbInitTask.get()
+        val locations = locationsTask.get()
         transaction { Database.upsertLocations(locations) }
     }
 
+    // Scrape dining menu hours (dining.ncsu.edu)
+    val hoursTask = pool.submit(Callable {
+        dbInitTask.get()
+        DiningHoursScraper.scrapeAndStore()
+    })
+
+    // Scrape menus (NetNutrition)
+    val locations = locationsTask.get()
     val futures = pool.invokeAll(locations.map { loc ->
         Callable {
             val menus = Scraper.getMenus(loc.id)
@@ -53,10 +62,15 @@ fun runScraper() {
     )
 
     locDBTask.get()
-    transaction { Database.upsertLocations(locations) }
     transaction { Database.upsertMenus(menus) }
     transaction { Database.upsertMenuSections(menuSections) }
     transaction { Database.upsertMenuItems(menuItems) }
+
+    val hoursResult = hoursTask.get()
+    transaction {
+        Database.upsertDiningLocations(hoursResult.locations)
+        Database.replaceHours(hoursResult.hours)
+    }
 
     pool.shutdown()
 }

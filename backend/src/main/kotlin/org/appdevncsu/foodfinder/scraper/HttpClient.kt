@@ -15,7 +15,8 @@ import okhttp3.java.net.cookiejar.JavaNetCookieJar
 import java.net.CookieManager
 import java.util.concurrent.Semaphore
 
-const val baseURL = "https://netmenu2.cbord.com/NetNutrition/ncstate-dining"
+const val nnBaseURL = "https://netmenu2.cbord.com/NetNutrition/ncstate-dining"
+const val diningBaseURL = "https://dining.ncsu.edu"
 
 private val client = OkHttpClient.Builder()
     .cookieJar(JavaNetCookieJar(CookieManager()))
@@ -23,16 +24,20 @@ private val client = OkHttpClient.Builder()
 
 object HttpClient {
 
-    private val limiter = Semaphore(4) // Limit the number of inflight requests to 4 at a time
+    private val nnLimiter = Semaphore(4) // Limit the number of inflight requests to 4 at a time for NetNutrition
+    private val diningLimiter = Semaphore(2) // and 2 at a time for dining.ncsu.edu
 
-    fun getHTMLContent(url: String): Document {
+    fun getNetNutritionHTML(url: String): Document = getHTMLContent(nnBaseURL + url, nnLimiter)
+    fun getDiningHTML(url: String): Document = getHTMLContent(diningBaseURL + url, diningLimiter)
+
+    private fun getHTMLContent(url: String, semaphore: Semaphore): Document {
         val response: Response
         try {
-            limiter.acquire()
-            println("Fetching ${baseURL + url}")
-            response = client.newCall(Request.Builder().url(baseURL + url).build()).execute()
+            semaphore.acquire()
+            println("Fetching $url")
+            response = client.newCall(Request.Builder().url(url).build()).execute()
         } finally {
-            limiter.release()
+            semaphore.release()
         }
         if (response.code != 200) {
             error("Failed to fetch $url: $response")
@@ -44,15 +49,15 @@ object HttpClient {
         val body = requestBody.toRequestBody("application/x-www-form-urlencoded; charset=UTF-8".toMediaType())
         val request = Request.Builder()
             .post(body)
-            .url(baseURL + path)
+            .url(nnBaseURL + path)
             .build()
         val response: Response
         try {
-            limiter.acquire()
-            println("Fetching ${baseURL + path} with $requestBody")
+            nnLimiter.acquire()
+            println("Fetching ${nnBaseURL + path} with $requestBody")
             response = client.newCall(request).execute()
         } finally {
-            limiter.release()
+            nnLimiter.release()
         }
 
         if (response.code != 200) {

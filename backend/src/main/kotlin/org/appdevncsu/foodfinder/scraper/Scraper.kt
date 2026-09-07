@@ -4,7 +4,7 @@ import com.fleeksoft.ksoup.Ksoup
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.appdevncsu.foodfinder.shared.Location
+import org.appdevncsu.foodfinder.shared.MenuLocation
 import org.appdevncsu.foodfinder.shared.Menu
 import org.appdevncsu.foodfinder.shared.MenuItem
 import org.appdevncsu.foodfinder.shared.MenuSection
@@ -20,19 +20,19 @@ object Scraper {
     private val itemIdPattern =
         Regex("^javascript:NetNutrition\\.UI\\.getItemNutritionLabelOnClick\\(event,([\\d-]+)\\);$")
 
-    fun getLocations(): List<Location> {
-        val doc = HttpClient.getHTMLContent("/")
+    fun getLocations(): List<MenuLocation> {
+        val doc = HttpClient.getNetNutritionHTML("/")
 
-        val locations = doc.select(".card.unit a").map { link ->
+        val menuLocations = doc.select(".card.unit a").map { link ->
             val unitId = unitIdPattern.matchEntire(link.attr("onclick"))?.groups?.get(1)?.value?.toInt()
                 ?: error("Failed to extract Unit ID from dining location ${link.text()}")
-            Location(
+            MenuLocation(
                 id = unitId,
                 name = link.text()
             )
         }
 
-        return locations
+        return menuLocations
     }
 
     private val dateFormat = DateTimeFormatter.ofPattern(

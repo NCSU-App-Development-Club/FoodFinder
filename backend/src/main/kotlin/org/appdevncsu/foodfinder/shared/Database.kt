@@ -7,8 +7,11 @@ import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.javatime.date
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.batchUpsert
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.json
 import java.time.LocalDate
@@ -17,7 +20,8 @@ object Database {
 
     private const val MAX_VARCHAR_LENGTH = 128
 
-    private object Locations : Table("locations") {
+    // Locations sourced from NetNutrition (netmenu2.cbord.com), keyed by NetNutrition unit ID.
+    private object MenuLocations : Table("menuLocations") {
         val id = integer("id")
         val name = varchar("name", MAX_VARCHAR_LENGTH)
 
@@ -26,7 +30,7 @@ object Database {
 
     private object Menus : Table("menus") {
         val id = integer("id")
-        val locationId = reference("locationId", Locations.id)
+        val locationId = reference("locationId", MenuLocations.id)
         val date = date("date")
         val name = varchar("name", MAX_VARCHAR_LENGTH)
 
@@ -59,18 +63,80 @@ object Database {
         override val primaryKey = PrimaryKey(id)
     }
 
+    // Locations sourced from dining.ncsu.edu, keyed by URL slug.
+    private object DiningLocations : Table("diningLocations") {
+        val slug = varchar("slug", 64) // e.g. "fountain"
+        val name = varchar("name", MAX_VARCHAR_LENGTH)
+        val type = varchar("type", 32) // e.g. "dining-halls"
+        val imageUrl = varchar("imageUrl", 256).nullable()
+        val unitId = integer("unitId").nullable() // NetNutrition unit ID, if applicable
+
+        override val primaryKey = PrimaryKey(slug)
+    }
+
+    // One row per open range per location per day, or a single "closed"/"unknown" row.
+    private object LocationHours : Table("locationHours") {
+        val slug = reference("slug", DiningLocations.slug)
+        val date = date("date")
+        val seq = integer("seq")
+        val status = varchar("status", 16) // "open" | "closed" | "unknown"
+        val openMinute = integer("openMinute").nullable() // minutes after midnight
+        val closeMinute = integer("closeMinute").nullable() // may exceed 1440
+        val rawText = varchar("rawText", 256) // verbatim text from the site
+
+        override val primaryKey = PrimaryKey(slug, date, seq)
+    }
+
     fun init() {
         Database.connect("jdbc:h2:./data.db", driver = "org.h2.Driver")
 
         transaction {
-            SchemaUtils.create(Locations, Menus, MenuSections, SectionsToItems, MenuItems)
+            SchemaUtils.create(
+                MenuLocations,
+                Menus,
+                MenuSections,
+                SectionsToItems,
+                MenuItems,
+                DiningLocations,
+                LocationHours
+            )
         }
     }
 
-    fun upsertLocations(locations: List<Location>) {
-        Locations.batchUpsert(locations) {
-            this[Locations.id] = it.id
-            this[Locations.name] = it.name
+    fun upsertLocations(menuLocations: List<MenuLocation>) {
+        MenuLocations.batchUpsert(menuLocations) {
+            this[MenuLocations.id] = it.id
+            this[MenuLocations.name] = it.name
+        }
+    }
+
+    fun upsertDiningLocations(locations: List<DiningLocation>) {
+        for (location in locations) {
+            DiningLocations.upsert {
+                it[DiningLocations.slug] = location.slug
+                it[DiningLocations.name] = location.name
+                it[DiningLocations.type] = location.type
+                it[DiningLocations.imageUrl] = location.imageUrl
+                it[DiningLocations.unitId] = location.unitId
+            }
+        }
+    }
+
+    fun replaceHours(rows: List<DiningLocationHours>) {
+        val keys = rows.map { it.slug to it.date }.distinct()
+        for ((slug, date) in keys) {
+            LocationHours.deleteWhere {
+                (LocationHours.slug eq slug) and (LocationHours.date eq date)
+            }
+        }
+        LocationHours.batchInsert(rows, shouldReturnGeneratedValues = false) {
+            this[LocationHours.slug] = it.slug
+            this[LocationHours.date] = it.date
+            this[LocationHours.seq] = it.seq
+            this[LocationHours.status] = it.status
+            this[LocationHours.openMinute] = it.openMinute
+            this[LocationHours.closeMinute] = it.closeMinute
+            this[LocationHours.rawText] = it.rawText
         }
     }
 
@@ -103,12 +169,70 @@ object Database {
         }
     }
 
-    fun getLocations(): List<Location> {
+    fun getLocationSummaries(): List<LocationSummary> {
         return transaction {
-            Locations.selectAll().map {
-                Location(it[Locations.id], it[Locations.name])
+            MenuLocations
+                .leftJoin(DiningLocations, { MenuLocations.id }, { DiningLocations.unitId })
+                .selectAll()
+                .orderBy(MenuLocations.id to SortOrder.ASC)
+                .map {
+                    LocationSummary(
+                        id = it[MenuLocations.id],
+                        name = it[MenuLocations.name],
+                        slug = it[DiningLocations.slug],
+                        type = it[DiningLocations.type],
+                        imageUrl = it[DiningLocations.imageUrl]
+                    )
+                }
+        }
+    }
+
+    fun getDiningSchedules(date: LocalDate): List<DiningLocationSchedule> {
+        return transaction {
+            val locationsBySlug = DiningLocations
+                .leftJoin(MenuLocations, { DiningLocations.unitId }, { MenuLocations.id })
+                .selectAll().associate {
+                    it[DiningLocations.slug] to
+                            ((it[MenuLocations.name] ?: it[DiningLocations.name]) to it[DiningLocations.type])
+                }
+
+            val hours = LocationHours
+                .selectAll()
+                .where { LocationHours.date eq date }
+                .orderBy(LocationHours.slug to SortOrder.ASC, LocationHours.seq to SortOrder.ASC)
+                .map {
+                    DiningLocationHours(
+                        slug = it[LocationHours.slug],
+                        date = it[LocationHours.date],
+                        seq = it[LocationHours.seq],
+                        status = it[LocationHours.status],
+                        openMinute = it[LocationHours.openMinute],
+                        closeMinute = it[LocationHours.closeMinute],
+                        rawText = it[LocationHours.rawText]
+                    )
+                }
+
+            locationsBySlug.map { (slug, nameAndType) ->
+                val (name, type) = nameAndType
+                DiningLocationSchedule(
+                    slug = slug,
+                    name = name,
+                    type = type,
+                    hours = hours.filter { it.slug == slug }
+                        .sortedBy { it.seq }
+                        .map { it.toHoursRange() }
+                )
             }
         }
+    }
+
+    private fun DiningLocationHours.toHoursRange(): HoursRange {
+        return HoursRange(
+            status = status,
+            openMinute = openMinute,
+            closeMinute = closeMinute,
+            rawText = rawText
+        )
     }
 
     fun getMenus(locationId: Int): List<Menu> {
