@@ -181,9 +181,17 @@ object Database {
                         name = it[MenuLocations.name],
                         slug = it[DiningLocations.slug],
                         type = it[DiningLocations.type],
-                        imageUrl = it[DiningLocations.imageUrl]
+                        imageUrl = "/api/locations/${it[DiningLocations.slug]}/image"
                     )
                 }
+        }
+    }
+
+    fun getLocationImageUrl(slug: String): String? {
+        return transaction {
+            DiningLocations.selectAll()
+                .where { DiningLocations.slug eq slug }
+                .singleOrNull()?.get(DiningLocations.imageUrl)
         }
     }
 

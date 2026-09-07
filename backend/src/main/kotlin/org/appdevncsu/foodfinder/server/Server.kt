@@ -9,6 +9,8 @@ import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.appdevncsu.foodfinder.shared.Database
 import org.appdevncsu.foodfinder.shared.HoursResponse
 import org.appdevncsu.foodfinder.shared.NCSU_ZONE
@@ -50,6 +52,27 @@ fun Application.configureRouting() {
                 // Only changes when the scrapers learn something new, so clients can cache it.
                 call.response.header(HttpHeaders.CacheControl, "public, max-age=86400")
                 call.respond(mapOf("locations" to Database.getLocationSummaries()))
+            }
+            get("/locations/{slug}/image") {
+                val slug = call.parameters["slug"]!!
+                val imageUrl = Database.getLocationImageUrl(slug)
+                if (imageUrl == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "No image for location '$slug'"))
+                    return@get
+                }
+                val image = withContext(Dispatchers.IO) {
+                    runCatching { Images.fetch(imageUrl) }.getOrNull()
+                }
+                if (image == null) {
+                    call.respond(HttpStatusCode.BadGateway, mapOf("error" to "Failed to fetch image for '$slug'"))
+                    return@get
+                }
+                call.response.header(HttpHeaders.CacheControl, "public, max-age=2592000")
+                call.respondBytes(
+                    image.bytes,
+                    image.contentType?.let { runCatching { ContentType.parse(it) }.getOrNull() }
+                        ?: ContentType.Application.OctetStream
+                )
             }
             route("/locations/{locationId}/menus") {
                 get {
