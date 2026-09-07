@@ -27,30 +27,15 @@ import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.data.Item
 
 
-
-
 // -------------------------------
 // Composable UI
 // -------------------------------
 @Composable
 fun MenuItem(menuItem: Item, modifier: Modifier = Modifier) {
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        Column {
-            Text(text = menuItem.name, style = MaterialTheme.typography.bodyLarge)
-            Spacer(modifier = Modifier.height(4.dp))
-            BadgeList(menuItem)
-        }
-
-        Icon(
-            painter = painterResource(R.drawable.favorite_24px),
-            contentDescription = "Favorite",
-            modifier = Modifier.size(24.dp),
-            tint = Color.Red
-        )
+    Column(modifier = modifier) {
+        Text(text = menuItem.name, style = MaterialTheme.typography.bodyLarge)
+        Spacer(modifier = Modifier.height(4.dp))
+        BadgeList(menuItem)
     }
 }
 

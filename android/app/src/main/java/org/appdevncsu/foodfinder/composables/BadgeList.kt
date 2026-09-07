@@ -12,7 +12,7 @@ import org.appdevncsu.foodfinder.data.Item
 @Composable
 fun BadgeList(menuItem: Item, modifier: Modifier = Modifier) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
     ) {
