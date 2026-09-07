@@ -259,17 +259,25 @@ object Database {
     }
 
     fun getMenu(menuId: Int): List<MenuSection> {
-        val sections = mutableListOf<MenuSection>()
-        val iterator = transaction {
-            MenuItems
+        val (turnover, rows) = transaction {
+            val locationId = Menus
+                .selectAll()
+                .where { Menus.id eq menuId }
+                .singleOrNull()?.get(Menus.locationId)
+                ?: return@transaction null
+
+            val turnover = getSectionTurnover(locationId)
+            val rows = MenuItems
                 .innerJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId and (SectionsToItems.menuId eq menuId) }
                 .leftJoin(MenuSections) { MenuSections.id eq SectionsToItems.sectionId }
                 .selectAll()
                 .orderBy(MenuSections.id to SortOrder.ASC).toList()
-        }
+            turnover to rows
+        } ?: return emptyList()
 
+        val sections = mutableListOf<MenuSection>()
         var section: MenuSection? = null
-        for (row in iterator) {
+        for (row in rows) {
             if (section == null || row[MenuSections.id] != section.id) {
                 if (section != null) sections.add(section)
                 section = MenuSection(
@@ -289,13 +297,6 @@ object Database {
         }
         if (section != null) sections.add(section)
 
-        val locationId = transaction {
-            Menus.selectAll()
-                .where { Menus.id eq menuId }
-                .singleOrNull()?.get(Menus.locationId)
-        } ?: return emptyList()
-
-        val turnover = getSectionTurnover(locationId)
         return sections.sortedWith(
             compareBy(
                 { if (it.id in turnover) 1 else 0 },
@@ -309,20 +310,18 @@ object Database {
         val occurrences = SectionsToItems.itemId.count()
         val distinctNames = MenuItems.name.countDistinct()
         val distinctMenus = Menus.id.countDistinct()
-        return transaction {
-            MenuItems
-                .innerJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId }
-                .innerJoin(Menus) { SectionsToItems.menuId eq Menus.id }
-                .select(listOf(SectionsToItems.sectionId, occurrences, distinctNames, distinctMenus))
-                .where {
-                    (Menus.locationId eq locationId) and
-                        (Menus.date greaterEq LocalDate.now().minusDays(TURNOVER_WINDOW_DAYS))
-                }
-                .groupBy(SectionsToItems.sectionId)
-                .having { distinctMenus greaterEq TURNOVER_MIN_MENUS }
-                .associate {
-                    it[SectionsToItems.sectionId] to (it[occurrences].toDouble() / it[distinctNames])
-                }
-        }
+        return MenuItems
+            .innerJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId }
+            .innerJoin(Menus) { SectionsToItems.menuId eq Menus.id }
+            .select(listOf(SectionsToItems.sectionId, occurrences, distinctNames, distinctMenus))
+            .where {
+                (Menus.locationId eq locationId) and
+                    (Menus.date greaterEq LocalDate.now().minusDays(TURNOVER_WINDOW_DAYS))
+            }
+            .groupBy(SectionsToItems.sectionId)
+            .having { distinctMenus greaterEq TURNOVER_MIN_MENUS }
+            .associate {
+                it[SectionsToItems.sectionId] to (it[occurrences].toDouble() / it[distinctNames])
+            }
     }
 }
