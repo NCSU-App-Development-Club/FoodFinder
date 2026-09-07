@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,9 +31,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import org.appdevncsu.foodfinder.R
+import org.appdevncsu.foodfinder.data.SectionList
 import org.appdevncsu.foodfinder.viewmodel.MenuViewModel
 
 private const val ExpandedChevronRotationDegrees = 90f
+
+private const val MenuSectionListSkeletonCount = 3
+private const val MenuSectionListSkeletonItemsPerSection = 3
+private const val SkeletonSectionTitleBarWidthFraction = 0.5f
+private const val SkeletonItemNameBarWidthFraction = 0.65f
+private val SkeletonSectionTitleBarHeight = 28.dp
+private val SkeletonItemNameBarHeight = 24.dp
+private val SkeletonItemBadgeBarWidth = 72.dp
+private val SkeletonItemBadgeBarHeight = 18.dp
 
 @Composable
 fun MenuSectionList(
@@ -44,12 +56,27 @@ fun MenuSectionList(
     }
     val sections by viewModel.sections.collectAsState()
 
+    MenuSectionListContent(sections, modifier)
+}
+
+@Composable
+private fun MenuSectionListContent(
+    sections: SectionList?,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 8.dp)
     ) {
-        sections?.sections?.forEach { section ->
+        if (sections == null) {
+            items(MenuSectionListSkeletonCount) {
+                SkeletonMenuSection()
+            }
+            return@LazyColumn
+        }
+
+        sections.sections.forEach { section ->
             item {
                 var expanded by rememberSaveable { mutableStateOf(true) }
                 Column(
@@ -91,10 +118,45 @@ fun MenuSectionList(
     }
 }
 
+@Composable
+private fun SkeletonMenuSection(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(top = 16.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SkeletonBar(
+            modifier = Modifier
+                .fillMaxWidth(SkeletonSectionTitleBarWidthFraction)
+                .height(SkeletonSectionTitleBarHeight)
+        )
+        repeat(MenuSectionListSkeletonItemsPerSection) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                SkeletonBar(
+                    modifier = Modifier
+                        .fillMaxWidth(SkeletonItemNameBarWidthFraction)
+                        .height(SkeletonItemNameBarHeight)
+                )
+                SkeletonBar(
+                    modifier = Modifier.size(
+                        SkeletonItemBadgeBarWidth,
+                        SkeletonItemBadgeBarHeight
+                    )
+                )
+            }
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun MenuSectionListPreview() {
     Box(modifier = Modifier.background(Color.White)) {
         MenuSectionList(menuId = 1)
     }
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun MenuSectionListLoadingPreview() {
+    MenuSectionListContent(sections = null)
 }

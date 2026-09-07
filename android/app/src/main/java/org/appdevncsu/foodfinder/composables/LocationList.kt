@@ -1,11 +1,5 @@
 package org.appdevncsu.foodfinder.composables
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -34,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -57,13 +50,7 @@ import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
 
 private const val LocationImageAspectRatio = 16f / 9f
 private const val LocationSkeletonCount = 4
-private const val SkeletonPulseDurationMillis = 600
-
-private const val SkeletonPulseMinAlpha = 0.25f
-private const val SkeletonPulseMaxAlpha = 0.65f
-private val SkeletonBaseColor = Color.Gray
 private val SkeletonGap = 4.dp
-private val SkeletonBarShape = RoundedCornerShape(4.dp)
 private val SkeletonPillShape = RoundedCornerShape(percent = 50)
 private const val SkeletonPrimaryWidthFraction = 0.75f
 private val NameTextLineHeight = 24.sp
@@ -256,24 +243,6 @@ private fun SkeletonLocationItem(modifier: Modifier = Modifier) {
             )
         }
     }
-}
-
-@Composable
-private fun SkeletonBar(modifier: Modifier = Modifier, shape: Shape = SkeletonBarShape) {
-    val pulse by rememberInfiniteTransition(label = "skeleton").animateFloat(
-        initialValue = SkeletonPulseMinAlpha,
-        targetValue = SkeletonPulseMaxAlpha,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = SkeletonPulseDurationMillis, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "skeletonPulse"
-    )
-    Box(
-        modifier = modifier
-            .clip(shape)
-            .background(SkeletonBaseColor.copy(alpha = pulse))
-    )
 }
 
 @Composable
