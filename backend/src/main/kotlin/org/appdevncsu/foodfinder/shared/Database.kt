@@ -10,6 +10,7 @@ import org.jetbrains.exposed.v1.jdbc.SchemaUtils
 import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.batchUpsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -19,6 +20,9 @@ import java.time.LocalDate
 object Database {
 
     private const val MAX_VARCHAR_LENGTH = 128
+
+    private const val TURNOVER_WINDOW_DAYS = 14L
+    private const val TURNOVER_MIN_MENUS = 3L
 
     // Locations sourced from NetNutrition (netmenu2.cbord.com), keyed by NetNutrition unit ID.
     private object MenuLocations : Table("menuLocations") {
@@ -285,6 +289,40 @@ object Database {
         }
         if (section != null) sections.add(section)
 
-        return sections.toList()
+        val locationId = transaction {
+            Menus.selectAll()
+                .where { Menus.id eq menuId }
+                .singleOrNull()?.get(Menus.locationId)
+        } ?: return emptyList()
+
+        val turnover = getSectionTurnover(locationId)
+        return sections.sortedWith(
+            compareBy(
+                { if (it.id in turnover) 1 else 0 },
+                { turnover[it.id] ?: 0.0 },
+                { it.id }
+            )
+        )
+    }
+
+    private fun getSectionTurnover(locationId: Int): Map<Int, Double> {
+        val occurrences = SectionsToItems.itemId.count()
+        val distinctNames = MenuItems.name.countDistinct()
+        val distinctMenus = Menus.id.countDistinct()
+        return transaction {
+            MenuItems
+                .innerJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId }
+                .innerJoin(Menus) { SectionsToItems.menuId eq Menus.id }
+                .select(listOf(SectionsToItems.sectionId, occurrences, distinctNames, distinctMenus))
+                .where {
+                    (Menus.locationId eq locationId) and
+                        (Menus.date greaterEq LocalDate.now().minusDays(TURNOVER_WINDOW_DAYS))
+                }
+                .groupBy(SectionsToItems.sectionId)
+                .having { distinctMenus greaterEq TURNOVER_MIN_MENUS }
+                .associate {
+                    it[SectionsToItems.sectionId] to (it[occurrences].toDouble() / it[distinctNames])
+                }
+        }
     }
 }
