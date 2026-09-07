@@ -9,3 +9,7 @@
 .cxx
 local.properties
 detekt-report.sarif
+# Play upload signing secrets — never commit.
+keystore.properties
+*.jks
+*.keystore
