@@ -54,21 +54,26 @@ class LocationListViewModel @Inject constructor(
     private val _hoursBySlug = MutableStateFlow<Map<String, List<HoursRange>>?>(null)
     private val _error = MutableStateFlow<String?>(null)
 
-    val uiState: StateFlow<UiState> = combine(_locations, _hoursBySlug, _error) { locations, hours, error ->
-        UiState(
-            loading = locations == null && error == null,
-            hoursLoading = hours == null,
-            items = (locations ?: emptyList())
-                .map { item ->
-                    val status = hours?.get(item.slug)?.let { ranges ->
-                        currentStatus(ranges, unavailableHoursText())
+    // Bumped every time the app returns to the foreground so open/closed
+    // statuses recompute against the current time even if the hours payload is unchanged.
+    private val _clockTick = MutableStateFlow(0L)
+
+    val uiState: StateFlow<UiState> =
+        combine(_locations, _hoursBySlug, _error, _clockTick) { locations, hours, error, _ ->
+            UiState(
+                loading = locations == null && error == null,
+                hoursLoading = hours == null,
+                items = (locations ?: emptyList())
+                    .map { item ->
+                        val status = hours?.get(item.slug)?.let { ranges ->
+                            currentStatus(ranges, unavailableHoursText())
+                        }
+                        LocationListItem(item, status)
                     }
-                    LocationListItem(item, status)
-                }
-                .sortedWith(locationComparator),
-            error = error,
-        )
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState(loading = true))
+                    .sortedWith(locationComparator),
+                error = error,
+            )
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState(loading = true))
 
     init {
         loadLocations()
@@ -79,32 +84,59 @@ class LocationListViewModel @Inject constructor(
             _locations.value = null
             _hoursBySlug.value = null
             _error.value = null
-            coroutineScope {
-                val locationsDeferred = async { runCatching { apiClient.listLocations() } }
-                val hoursDeferred = async { runCatching { apiClient.listHours() } }
-                val locationsResult = locationsDeferred.await()
-                val hoursResult = hoursDeferred.await()
-                val locations = locationsResult.getOrNull()?.locations
-                if (locations == null) {
+            fetchAndApply(isRefresh = false)
+        }
+    }
+
+    /**
+     * Called every time the app returns to the foreground. Bumps the clock so
+     * open/closed badges recompute instantly, then re-fetches in the background
+     * without clearing the current list (no loading skeletons).
+     */
+    fun onForegrounded() {
+        _clockTick.value += 1
+        if (_locations.value == null) {
+            // Initial load still in flight; let it finish instead of doubling the fetch.
+            return
+        }
+        viewModelScope.launch {
+            fetchAndApply(isRefresh = true)
+        }
+    }
+
+    private suspend fun fetchAndApply(isRefresh: Boolean) {
+        coroutineScope {
+            val locationsDeferred = async { runCatching { apiClient.listLocations() } }
+            val hoursDeferred = async { runCatching { apiClient.listHours() } }
+            val locationsResult = locationsDeferred.await()
+            val hoursResult = hoursDeferred.await()
+            val locations = locationsResult.getOrNull()?.locations
+            if (locations == null) {
+                val error = locationsResult.exceptionOrNull()
+                if (error != null) {
+                    logApiError(TAG, error)
+                }
+                // On a background refresh keep showing the existing list.
+                if (!isRefresh) {
                     _locations.value = emptyList()
                     _hoursBySlug.value = emptyMap()
-                    val error = locationsResult.exceptionOrNull()
-                    if (error != null) {
-                        logApiError(TAG, error)
-                    }
                     _error.value = error?.let { userMessageFor(it, context.resources) }
                         ?: context.getString(R.string.error_generic)
-                    return@coroutineScope
                 }
-                hoursResult.exceptionOrNull()?.let { logApiError(TAG, it) }
-                val hoursBySlug = hoursResult.getOrNull()
-                    ?.locations
-                    ?.associate { it.slug to it.hours }
-                _locations.value = locations
-                // Hours are non-fatal: missing hours just render as "Hours unavailable".
-                _hoursBySlug.value = hoursBySlug ?: emptyMap()
-                prefetchOpenDiningHallMenus(locations, hoursBySlug)
+                return@coroutineScope
             }
+            hoursResult.exceptionOrNull()?.let { logApiError(TAG, it) }
+            val hoursBySlug = hoursResult.getOrNull()
+                ?.locations
+                ?.associate { it.slug to it.hours }
+            // On refresh keep old hours if the hours call failed.
+                ?: if (isRefresh) _hoursBySlug.value else null
+            _locations.value = locations
+            // Hours are non-fatal: missing hours just render as "Hours unavailable".
+            _hoursBySlug.value = hoursBySlug ?: emptyMap()
+            // A successful refresh recovers from a previous full-screen error.
+            _error.value = null
+            prefetchOpenDiningHallMenus(locations, hoursBySlug)
         }
     }
 
