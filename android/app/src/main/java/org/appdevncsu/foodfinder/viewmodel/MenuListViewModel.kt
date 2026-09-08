@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.appdevncsu.foodfinder.data.APIClient
+import org.appdevncsu.foodfinder.data.Menu
 import org.appdevncsu.foodfinder.data.MenuList
 import org.appdevncsu.foodfinder.data.logApiError
 import org.appdevncsu.foodfinder.data.userMessageFor
@@ -37,7 +38,7 @@ class MenuListViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true, error = null) }
             try {
-                val menus = apiClient.listMenus(locationId)
+                val menus = sortMenus(apiClient.listMenus(locationId))
                 _uiState.update { it.copy(loading = false, menuList = menus, error = null) }
                 prefetchTodayMenus(menus)
             } catch (e: CancellationException) {
@@ -66,5 +67,29 @@ class MenuListViewModel @Inject constructor(
 
     private companion object {
         const val TAG = "MenuListViewModel"
+
+        private val mealOrder = mapOf(
+            "breakfast" to 0,
+            "lunch" to 1,
+            "dinner" to 2,
+            "daily" to 3,
+        )
+
+        fun getMealOrder(name: String): Int {
+            return mealOrder[name.trim().lowercase()] ?: Int.MAX_VALUE
+        }
+
+        fun sortMenus(menus: MenuList): MenuList {
+            return menus.copy(
+                menus = menus.menus.sortedWith(
+                    compareBy(
+                        { menu: Menu -> menu.date },
+                        { menu: Menu -> getMealOrder(menu.name) },
+                        { menu: Menu -> menu.name.lowercase() },
+                        { menu: Menu -> menu.id },
+                    )
+                )
+            )
+        }
     }
 }
