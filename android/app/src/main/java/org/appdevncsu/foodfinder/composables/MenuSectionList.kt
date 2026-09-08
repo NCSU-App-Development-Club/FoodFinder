@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -227,7 +228,7 @@ private fun MenuSectionListLoadingPreview() {
 private fun MenuSectionListErrorPreview() {
     FoodFinderTheme {
         MenuSectionListContent(
-            state = MenuViewModel.UiState(error = "Server error. Please try again later."),
+            state = MenuViewModel.UiState(error = stringResource(R.string.error_server)),
         )
     }
 }

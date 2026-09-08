@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,7 +49,7 @@ fun ScreenScaffold(
                         IconButton(onClick = onBack) {
                             Icon(
                                 painter = painterResource(R.drawable.arrow_back_24px),
-                                contentDescription = "Back",
+                                contentDescription = stringResource(R.string.back),
                             )
                         }
                     }
@@ -86,7 +87,7 @@ private fun ScreenScaffoldPreview() {
     FoodFinderTheme {
         ScreenScaffold(
             title = "Fountain Dining Hall",
-            subtitle = "Today",
+            subtitle = stringResource(R.string.today),
             onBack = {},
         ) {
             Text("Content")
@@ -98,7 +99,7 @@ private fun ScreenScaffoldPreview() {
 @Composable
 private fun ScreenScaffoldNoSubtitlePreview() {
     FoodFinderTheme {
-        ScreenScaffold(title = "FoodFinder") {
+        ScreenScaffold(title = stringResource(R.string.app_name)) {
             Text("Content")
         }
     }

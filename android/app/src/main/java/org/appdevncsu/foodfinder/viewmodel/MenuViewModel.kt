@@ -1,8 +1,10 @@
 package org.appdevncsu.foodfinder.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +18,10 @@ import org.appdevncsu.foodfinder.data.userMessageFor
 import javax.inject.Inject
 
 @HiltViewModel
-class MenuViewModel @Inject constructor(private val apiClient: APIClient) : ViewModel() {
+class MenuViewModel @Inject constructor(
+    private val apiClient: APIClient,
+    @ApplicationContext private val context: Context
+) : ViewModel() {
     data class UiState(
         val loading: Boolean = true,
         val sections: SectionList? = null,
@@ -38,7 +43,7 @@ class MenuViewModel @Inject constructor(private val apiClient: APIClient) : View
                 throw e
             } catch (e: Exception) {
                 logApiError(TAG, e)
-                _uiState.update { it.copy(loading = false, error = userMessageFor(e)) }
+                _uiState.update { it.copy(loading = false, error = userMessageFor(e, context.resources)) }
             }
         }
     }

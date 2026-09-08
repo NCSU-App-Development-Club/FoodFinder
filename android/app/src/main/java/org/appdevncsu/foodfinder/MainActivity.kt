@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -57,7 +58,7 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
         predictivePopExitTransition = { backExitTransition() },
     ) {
         composable<Route.Home> {
-            ScreenScaffold(title = "FoodFinder") {
+            ScreenScaffold(title = stringResource(R.string.app_name)) {
                 LocationList(
                     onLocationClick = { location ->
                         navController.navigate(Route.MenuList(location.id, location.name))

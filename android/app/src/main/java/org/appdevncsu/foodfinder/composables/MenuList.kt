@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import android.content.res.Configuration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -163,7 +164,7 @@ private fun EmptyMenuState(modifier: Modifier = Modifier) {
             modifier = Modifier.size(64.dp)
         )
         Text(
-            text = "No menus available for this location",
+            text = stringResource(R.string.empty_menus),
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -219,7 +220,7 @@ private fun MenuListEmptyPreview() {
 private fun MenuListErrorPreview() {
     FoodFinderTheme {
         MenuListContent(
-            state = MenuListViewModel.UiState(error = "No internet connection. Check your connection and try again."),
+            state = MenuListViewModel.UiState(error = stringResource(R.string.error_no_connection)),
             navController = rememberNavController(),
         )
     }

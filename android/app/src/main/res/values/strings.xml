@@ -1,3 +1,41 @@
 <resources>
     <string name="app_name">FoodFinder</string>
+
+    <!-- Common actions -->
+    <string name="retry">Retry</string>
+    <string name="back">Back</string>
+
+    <!-- Date labels -->
+    <string name="today">Today</string>
+    <string name="tomorrow">Tomorrow</string>
+
+    <!-- Location status badges -->
+    <string name="status_open">Open</string>
+    <string name="status_closing_soon">Closing</string>
+    <string name="status_closed">Closed</string>
+    <string name="hours_unavailable">Hours unavailable</string>
+
+    <!-- Empty states -->
+    <string name="empty_menus">No menus available for this location</string>
+
+    <!-- Error messages -->
+    <string name="error_no_connection">No internet connection. Check your connection and try again.</string>
+    <string name="error_server">Server error. Please try again later.</string>
+    <string name="error_not_found">Requested content was not found.</string>
+    <string name="error_generic">Something went wrong. Please try again.</string>
+
+    <!-- Dietary badge descriptions -->
+    <string name="badge_wolf_approved">Wolf Approved</string>
+    <string name="badge_vegetarian">Vegetarian</string>
+    <string name="badge_vegan">Vegan</string>
+    <string name="badge_soy">Contains soy</string>
+    <string name="badge_halal">Halal (U)</string>
+    <string name="badge_eggs">Contains eggs</string>
+    <string name="badge_sesame">Contains sesame</string>
+    <string name="badge_seafood">Contains seafood</string>
+    <string name="badge_pork">Contains pork</string>
+    <string name="badge_nuts">Contains nuts</string>
+    <string name="badge_gluten">Contains gluten</string>
+    <string name="badge_dairy">Contains dairy</string>
+    <string name="badge_content_description">%1$s Badge</string>
 </resources>

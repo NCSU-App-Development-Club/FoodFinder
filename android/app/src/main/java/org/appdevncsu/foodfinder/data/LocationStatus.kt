@@ -20,12 +20,15 @@ data class LocationListItem(
 )
 
 private const val ClosingSoonWindowMinutes = 30
-private const val HoursUnavailableText = "Hours unavailable"
 private val ncsuZone = ZoneId.of("America/New_York")
 
-fun currentStatus(hours: List<HoursRange>?, now: LocalTime = LocalTime.now(ncsuZone)): LocationStatus {
+fun currentStatus(
+    hours: List<HoursRange>?,
+    hoursUnavailableText: String,
+    now: LocalTime = LocalTime.now(ncsuZone)
+): LocationStatus {
     if (hours.isNullOrEmpty()) {
-        return LocationStatus.Unavailable(HoursUnavailableText)
+        return LocationStatus.Unavailable(hoursUnavailableText)
     }
     val nowMinute = now.get(ChronoField.MINUTE_OF_DAY)
     val activeCloseMinute = hours.firstNotNullOfOrNull { range ->
@@ -35,7 +38,7 @@ fun currentStatus(hours: List<HoursRange>?, now: LocalTime = LocalTime.now(ncsuZ
         if (isActive) closeMinute else null
     }
     val unknown = hours.any { it.status == "unknown" }
-    val hoursText = hours.joinToString(" | ") { it.rawText }.ifBlank { HoursUnavailableText }
+    val hoursText = hours.joinToString(" | ") { it.rawText }.ifBlank { hoursUnavailableText }
     return when {
         activeCloseMinute != null -> {
             if (activeCloseMinute - nowMinute <= ClosingSoonWindowMinutes) {

@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import android.content.res.Configuration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,7 +49,7 @@ fun ErrorState(
             textAlign = TextAlign.Center,
         )
         Button(onClick = onRetry) {
-            Text(text = "Retry")
+            Text(text = stringResource(R.string.retry))
         }
     }
 }
@@ -58,7 +59,7 @@ fun ErrorState(
 private fun ErrorStatePreview() {
     FoodFinderTheme {
         ErrorState(
-            message = "No internet connection. Check your connection and try again.",
+            message = stringResource(R.string.error_no_connection),
             onRetry = {},
         )
     }
@@ -69,7 +70,7 @@ private fun ErrorStatePreview() {
 private fun ErrorStateDarkPreview() {
     FoodFinderTheme(darkTheme = true) {
         ErrorState(
-            message = "No internet connection. Check your connection and try again.",
+            message = stringResource(R.string.error_no_connection),
             onRetry = {},
         )
     }

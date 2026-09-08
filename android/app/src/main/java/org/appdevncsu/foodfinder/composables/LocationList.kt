@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,6 +45,7 @@ import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImagePreviewHandler
+import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.data.Location
 import org.appdevncsu.foodfinder.data.LocationListItem
 import org.appdevncsu.foodfinder.data.LocationStatus
@@ -209,14 +211,17 @@ private fun LocationStatusText(status: LocationStatus?, isHoursLoading: Boolean,
 private fun LocationStatusBadge(status: LocationStatus, modifier: Modifier = Modifier) {
     val colorScheme = MaterialTheme.colorScheme
     val extended = MaterialTheme.foodFinderExtended
+    val openText = stringResource(R.string.status_open)
+    val closingSoonText = stringResource(R.string.status_closing_soon)
+    val closedText = stringResource(R.string.status_closed)
     val pill = when (status) {
-        is LocationStatus.Open -> Triple(extended.statusOpen, extended.onStatusOpen, "Open")
+        is LocationStatus.Open -> Triple(extended.statusOpen, extended.onStatusOpen, openText)
         is LocationStatus.ClosingSoon -> Triple(
             extended.statusClosingSoon,
             extended.onStatusClosingSoon,
-            "Closing"
+            closingSoonText
         )
-        is LocationStatus.Closed -> Triple(colorScheme.error, colorScheme.onError, "Closed")
+        is LocationStatus.Closed -> Triple(colorScheme.error, colorScheme.onError, closedText)
         is LocationStatus.Unavailable -> null
     }
     if (pill == null) return
@@ -320,7 +325,7 @@ private fun LocationListLoadingPreview() {
 private fun LocationListErrorPreview() {
     FoodFinderTheme {
         LocationListContent(
-            LocationListViewModel.UiState(error = "No internet connection. Check your connection and try again."),
+            LocationListViewModel.UiState(error = stringResource(R.string.error_no_connection)),
             onLocationClick = {},
             onRetry = {},
         )

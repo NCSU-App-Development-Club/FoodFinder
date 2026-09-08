@@ -26,32 +26,32 @@ fun BadgeList(menuItem: Item, modifier: Modifier = Modifier) {
 data class BadgeInfo(
     val flagName: String,
     val drawableRes: Int,
-    val description: String
+    val descriptionRes: Int
 )
 
 private val badgeMap = mapOf(
-    "Wolf Approved" to BadgeInfo("Wolf Approved", R.drawable.wolf_approved, "Wolf Approved"),
-    "Vegetarian" to BadgeInfo("Vegetarian", R.drawable.vegetarian, "Vegetarian"),
-    "Vegan" to BadgeInfo("Vegan", R.drawable.vegan, "Vegan"),
-    "Soy" to BadgeInfo("Soy", R.drawable.soy, "Contains soy"),
-    "Halal (U)" to BadgeInfo("Halal (U)", R.drawable.halal_u, "Halal (U)"),
-    "Eggs" to BadgeInfo("Eggs", R.drawable.eggs, "Contains eggs"),
+    "Wolf Approved" to BadgeInfo("Wolf Approved", R.drawable.wolf_approved, R.string.badge_wolf_approved),
+    "Vegetarian" to BadgeInfo("Vegetarian", R.drawable.vegetarian, R.string.badge_vegetarian),
+    "Vegan" to BadgeInfo("Vegan", R.drawable.vegan, R.string.badge_vegan),
+    "Soy" to BadgeInfo("Soy", R.drawable.soy, R.string.badge_soy),
+    "Halal (U)" to BadgeInfo("Halal (U)", R.drawable.halal_u, R.string.badge_halal),
+    "Eggs" to BadgeInfo("Eggs", R.drawable.eggs, R.string.badge_eggs),
     "Contains Sesame" to BadgeInfo(
         "Contains Sesame",
         R.drawable.contains_sesame,
-        "Contains sesame"
+        R.string.badge_sesame
     ),
     "Contains Seafood" to BadgeInfo(
         "Contains Seafood",
         R.drawable.contains_seafood,
-        "Contains seafood"
+        R.string.badge_seafood
     ),
-    "Contains Pork" to BadgeInfo("Contains Pork", R.drawable.contains_pork, "Contains pork"),
-    "Contains Nuts" to BadgeInfo("Contains Nuts", R.drawable.contains_nuts, "Contains nuts"),
+    "Contains Pork" to BadgeInfo("Contains Pork", R.drawable.contains_pork, R.string.badge_pork),
+    "Contains Nuts" to BadgeInfo("Contains Nuts", R.drawable.contains_nuts, R.string.badge_nuts),
     "Contains Gluten" to BadgeInfo(
         "Contains Gluten",
         R.drawable.contains_gluten,
-        "Contains gluten"
+        R.string.badge_gluten
     ),
-    "Contains Dairy" to BadgeInfo("Contains Dairy", R.drawable.contains_dairy, "Contains dairy")
+    "Contains Dairy" to BadgeInfo("Contains Dairy", R.drawable.contains_dairy, R.string.badge_dairy)
 )

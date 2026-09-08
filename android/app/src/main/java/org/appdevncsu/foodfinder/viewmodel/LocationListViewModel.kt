@@ -1,8 +1,10 @@
 package org.appdevncsu.foodfinder.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.data.APIClient
 import org.appdevncsu.foodfinder.data.HoursRange
 import org.appdevncsu.foodfinder.data.Location
@@ -35,7 +38,10 @@ private val locationComparator =
         .thenBy { it.location.name }
 
 @HiltViewModel
-class LocationListViewModel @Inject constructor(private val apiClient: APIClient) : ViewModel() {
+class LocationListViewModel @Inject constructor(
+    private val apiClient: APIClient,
+    @ApplicationContext private val context: Context
+) : ViewModel() {
 
     data class UiState(
         val loading: Boolean = false,
@@ -53,7 +59,12 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
             loading = locations == null && error == null,
             hoursLoading = hours == null,
             items = (locations ?: emptyList())
-                .map { LocationListItem(it, hours?.get(it.slug)?.let(::currentStatus)) }
+                .map { item ->
+                    val status = hours?.get(item.slug)?.let { ranges ->
+                        currentStatus(ranges, unavailableHoursText())
+                    }
+                    LocationListItem(item, status)
+                }
                 .sortedWith(locationComparator),
             error = error,
         )
@@ -81,8 +92,8 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
                     if (error != null) {
                         logApiError(TAG, error)
                     }
-                    _error.value = error?.let(::userMessageFor)
-                        ?: "Something went wrong. Please try again."
+                    _error.value = error?.let { userMessageFor(it, context.resources) }
+                        ?: context.getString(R.string.error_generic)
                     return@coroutineScope
                 }
                 hoursResult.exceptionOrNull()?.let { logApiError(TAG, it) }
@@ -106,7 +117,7 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
         if (hoursBySlug == null) return
         locations
             .filter { it.type == DiningHallType }
-            .filter { currentStatus(hoursBySlug[it.slug]).let(::isOpen) }
+            .filter { currentStatus(hoursBySlug[it.slug], unavailableHoursText()).let(::isOpen) }
             .forEach { location ->
                 viewModelScope.launch {
                     runCatching { apiClient.listMenus(location.id) }
@@ -117,6 +128,8 @@ class LocationListViewModel @Inject constructor(private val apiClient: APIClient
 
     private fun isOpen(status: LocationStatus) =
         status is LocationStatus.Open || status is LocationStatus.ClosingSoon
+
+    private fun unavailableHoursText(): String = context.getString(R.string.hours_unavailable)
 
     private companion object {
         const val TAG = "LocationListViewModel"
