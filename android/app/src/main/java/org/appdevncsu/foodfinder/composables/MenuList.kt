@@ -67,7 +67,7 @@ fun MenuList(
 }
 
 @Composable
-private fun MenuListContent(
+internal fun MenuListContent(
     state: MenuListViewModel.UiState,
     navController: NavController,
     modifier: Modifier = Modifier,
@@ -77,7 +77,7 @@ private fun MenuListContent(
     val dates = menus?.menus?.groupBy { it.date }
     LazyColumn(
         modifier = modifier
-            .padding(horizontal = 8.dp)
+            .padding(horizontal = 16.dp)
             .consumeBottomNavBarInsets(),
         contentPadding = bottomNavBarContentPadding(),
     ) {

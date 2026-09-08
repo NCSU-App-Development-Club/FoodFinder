@@ -82,7 +82,7 @@ fun LocationList(
 }
 
 @Composable
-private fun LocationListContent(
+internal fun LocationListContent(
     state: LocationListViewModel.UiState,
     onLocationClick: (Location) -> Unit,
     modifier: Modifier = Modifier,
@@ -106,7 +106,7 @@ private fun LocationListContent(
     ) {
         if (state.loading) {
             items(LocationSkeletonCount) {
-                SkeletonLocationItem(modifier = Modifier.padding(horizontal = 8.dp))
+                SkeletonLocationItem(modifier = Modifier.padding(horizontal = 16.dp))
             }
         }
         items(state.items, key = { it.location.id }) { item ->
@@ -114,7 +114,7 @@ private fun LocationListContent(
                 item.location,
                 item.status,
                 onLocationClick,
-                modifier = Modifier.padding(horizontal = 8.dp),
+                modifier = Modifier.padding(horizontal = 16.dp),
                 isHoursLoading = state.hoursLoading,
             )
         }

@@ -66,7 +66,7 @@ fun MenuSectionList(
 }
 
 @Composable
-private fun MenuSectionListContent(
+internal fun MenuSectionListContent(
     state: MenuViewModel.UiState,
     modifier: Modifier = Modifier,
     onRetry: () -> Unit = {},
@@ -75,7 +75,7 @@ private fun MenuSectionListContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 8.dp)
+            .padding(horizontal = 16.dp)
             .consumeBottomNavBarInsets(),
         contentPadding = bottomNavBarContentPadding(),
     ) {
