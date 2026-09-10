@@ -12,6 +12,7 @@ import io.ktor.server.routing.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.appdevncsu.foodfinder.shared.Database
+import org.appdevncsu.foodfinder.shared.DiningLocationSchedule
 import org.appdevncsu.foodfinder.shared.HoursResponse
 import org.appdevncsu.foodfinder.shared.NCSU_ZONE
 import java.time.LocalDate
@@ -95,7 +96,6 @@ fun Application.configureRouting() {
                 }
             }
             get("/hours") {
-                call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
                 val dateParam = call.request.queryParameters["date"]
                 val date = if (dateParam == null) {
                     LocalDate.now(NCSU_ZONE)
@@ -110,13 +110,18 @@ fun Application.configureRouting() {
                         return@get
                     }
                 }
-                call.respond(
-                    HoursResponse(
-                        date = date.toString(),
-                        locations = Database.getDiningSchedules(date)
-                    )
-                )
+                val locations = Database.getDiningSchedules(date)
+                // Don't let clients cache an incomplete payload; retry soon instead.
+                val cacheControl = if (mostlyMissingHours(locations)) "no-store" else "public, max-age=3600"
+                call.response.header(HttpHeaders.CacheControl, cacheControl)
+                call.respond(HoursResponse(date = date.toString(), locations = locations))
             }
         }
     }
+}
+
+// A location has no hours information when it has no ranges or every range is "unknown".
+private fun mostlyMissingHours(locations: List<DiningLocationSchedule>): Boolean {
+    val missing = locations.count { schedule -> schedule.hours.all { it.status == "unknown" } }
+    return missing * 2 > locations.size
 }
