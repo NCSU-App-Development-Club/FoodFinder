@@ -33,6 +33,7 @@ fun runServerScheduled() {
 object Server {
     fun start() {
         Database.init()
+        startManualScrapeListener()
         embeddedServer(
             factory = CIO,
             port = 3000,
