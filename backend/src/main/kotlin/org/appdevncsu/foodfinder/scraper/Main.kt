@@ -5,8 +5,11 @@ import org.appdevncsu.foodfinder.shared.Menu
 import org.appdevncsu.foodfinder.shared.MenuItem
 import org.appdevncsu.foodfinder.shared.MenuSection
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.slf4j.LoggerFactory
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
+
+private val log = LoggerFactory.getLogger("scraper")
 
 fun main() {
     runScraper()
@@ -55,10 +58,13 @@ fun runScraper() {
         }
     }
 
-    println(
-        "Found ${locations.size} locations, ${menus.size} menus, " +
-            "${menuSections.size} menu sections, and ${menuItems.size} menu items " +
-            "(${menuItems.distinctBy { it.second.id }.count()} excluding duplicates)."
+    log.info(
+        "Found {} locations, {} menus, {} menu sections, and {} menu items ({} excluding duplicates).",
+        locations.size,
+        menus.size,
+        menuSections.size,
+        menuItems.size,
+        menuItems.distinctBy { it.second.id }.count(),
     )
 
     locDBTask.get()

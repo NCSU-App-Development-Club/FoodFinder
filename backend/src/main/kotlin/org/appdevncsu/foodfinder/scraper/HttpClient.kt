@@ -12,11 +12,14 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.java.net.cookiejar.JavaNetCookieJar
+import org.slf4j.LoggerFactory
 import java.net.CookieManager
 import java.util.concurrent.Semaphore
 
 const val nnBaseURL = "https://netmenu2.cbord.com/NetNutrition/ncstate-dining"
 const val diningBaseURL = "https://dining.ncsu.edu"
+
+private val log = LoggerFactory.getLogger("http")
 
 private val client = OkHttpClient.Builder()
     .cookieJar(JavaNetCookieJar(CookieManager()))
@@ -34,7 +37,7 @@ object HttpClient {
         val response: Response
         try {
             semaphore.acquire()
-            println("Fetching $url")
+            log.info("Fetching {}", url)
             response = client.newCall(Request.Builder().url(url).build()).execute()
         } finally {
             semaphore.release()
@@ -54,7 +57,7 @@ object HttpClient {
         val response: Response
         try {
             nnLimiter.acquire()
-            println("Fetching ${nnBaseURL + path} with $requestBody")
+            log.info("Fetching {} with {}", nnBaseURL + path, requestBody)
             response = client.newCall(request).execute()
         } finally {
             nnLimiter.release()

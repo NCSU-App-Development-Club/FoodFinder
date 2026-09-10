@@ -5,7 +5,10 @@ import com.fleeksoft.ksoup.nodes.Element
 import org.appdevncsu.foodfinder.shared.DiningLocation
 import org.appdevncsu.foodfinder.shared.DiningLocationHours
 import org.appdevncsu.foodfinder.shared.NCSU_ZONE
+import org.slf4j.LoggerFactory
 import java.time.LocalDate
+
+private val log = LoggerFactory.getLogger("diningHours")
 
 /**
  * Scrapes location tiles and daily open hours from dining.ncsu.edu.
@@ -76,9 +79,11 @@ object DiningHoursScraper {
         val today = LocalDate.now(NCSU_ZONE)
         val result = fetchAll((0 until days).map { today.plusDays(it.toLong()) })
 
-        println(
-            "Found ${result.locations.size} dining locations and " +
-                    "${result.hours.size} hours rows for the next $days day(s)."
+        log.info(
+            "Found {} dining locations and {} hours rows for the next {} day(s).",
+            result.locations.size,
+            result.hours.size,
+            days,
         )
         return result
     }
@@ -108,13 +113,13 @@ object DiningHoursScraper {
         val unmapped = tilesBySlug.keys.filter { it !in SLUG_TO_UNIT_ID }
         val mappedButUnseen = SLUG_TO_UNIT_ID.keys.filter { it !in tilesBySlug.keys }
         if (unmapped.isNotEmpty()) {
-            println("Warning: dining locations with no NetNutrition mapping: $unmapped")
+            log.warn("Dining locations with no NetNutrition mapping: {}", unmapped)
         }
         if (mappedButUnseen.isNotEmpty()) {
-            println("Warning: mapped locations missing from dining site: $mappedButUnseen")
+            log.warn("Mapped locations missing from dining site: {}", mappedButUnseen)
         }
         if (failed.isNotEmpty()) {
-            println("Warning: failed to fetch (after retry): $failed")
+            log.warn("Failed to fetch (after retry): {}", failed)
         }
 
         val locations = tilesBySlug.values.map { tile ->
@@ -137,7 +142,7 @@ object DiningHoursScraper {
             try {
                 return parseLocationTiles(HttpClient.getDiningHTML(url), type)
             } catch (e: Exception) {
-                println("Attempt $attempt to fetch $type on $date failed: $e")
+                log.warn("Attempt {} to fetch {} on {} failed", attempt, type, date, e)
             }
         }
         return null
@@ -150,7 +155,7 @@ object DiningHoursScraper {
     private fun parseTile(tile: Element, type: String): Tile? {
         val slug = slugRegex.find(tile.attr("href"))?.groupValues?.get(1)
         if (slug == null) {
-            println("Warning: could not extract slug from tile: ${tile.attr("href")}")
+            log.warn("Could not extract slug from tile: {}", tile.attr("href"))
             return null
         }
 
