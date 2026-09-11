@@ -143,6 +143,13 @@ object Database {
         }
     }
 
+    /** True when no scraped data has been stored yet. */
+    fun isEmpty(): Boolean {
+        return transaction {
+            MenuLocations.selectAll().none() && DiningLocations.selectAll().none()
+        }
+    }
+
     fun upsertLocations(menuLocations: List<MenuLocation>) {
         MenuLocations.batchUpsert(menuLocations) {
             this[MenuLocations.id] = it.id

@@ -11,11 +11,15 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.appdevncsu.foodfinder.scraper.ScrapeTarget
 import org.appdevncsu.foodfinder.shared.Database
 import org.appdevncsu.foodfinder.shared.DiningLocationSchedule
 import org.appdevncsu.foodfinder.shared.HoursResponse
 import org.appdevncsu.foodfinder.shared.NCSU_ZONE
+import org.slf4j.LoggerFactory
 import java.time.LocalDate
+
+private val log = LoggerFactory.getLogger("server")
 
 fun main() {
     runServer()
@@ -33,6 +37,10 @@ fun runServerScheduled() {
 object Server {
     fun start() {
         Database.init()
+        if (Database.isEmpty()) {
+            log.info("Database is empty; running initial scrape")
+            triggerScrape(ScrapeTarget.ALL)
+        }
         startManualScrapeListener()
         embeddedServer(
             factory = CIO,
