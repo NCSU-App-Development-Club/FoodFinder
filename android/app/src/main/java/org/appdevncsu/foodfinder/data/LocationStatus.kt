@@ -1,7 +1,6 @@
 package org.appdevncsu.foodfinder.data
 
 import java.time.LocalTime
-import java.time.ZoneId
 import java.time.temporal.ChronoField
 
 sealed interface LocationStatus {
@@ -20,7 +19,6 @@ data class LocationListItem(
 )
 
 private const val ClosingSoonWindowMinutes = 30
-private val ncsuZone = ZoneId.of("America/New_York")
 
 fun currentStatus(
     hours: List<HoursRange>?,

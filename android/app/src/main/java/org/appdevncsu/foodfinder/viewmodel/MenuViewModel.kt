@@ -6,20 +6,24 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.appdevncsu.foodfinder.data.APIClient
 import org.appdevncsu.foodfinder.data.SectionList
 import org.appdevncsu.foodfinder.data.logApiError
+import org.appdevncsu.foodfinder.data.repository.ContentRepository
 import org.appdevncsu.foodfinder.data.userMessageFor
 import javax.inject.Inject
 
 @HiltViewModel
 class MenuViewModel @Inject constructor(
-    private val apiClient: APIClient,
+    private val repository: ContentRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
     data class UiState(
@@ -32,23 +36,44 @@ class MenuViewModel @Inject constructor(
 
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    @Suppress("TooGenericExceptionCaught")
+    private var observeJob: Job? = null
+    private var observedKey: Pair<Int, Int>? = null
+
     fun loadMenu(menuId: Int, locationId: Int) {
+        val key = menuId to locationId
+        if (observedKey != key) {
+            observeJob?.cancel()
+            observedKey = key
+            observeJob = repository.observeSections(locationId, menuId)
+                .distinctUntilChanged()
+                .onEach { sections ->
+                    _uiState.update {
+                        it.copy(loading = sections == null && it.error == null, sections = sections)
+                    }
+                }
+                .launchIn(viewModelScope)
+        }
+        refresh(menuId, locationId)
+    }
+
+    fun retry(menuId: Int, locationId: Int) = loadMenu(menuId, locationId)
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun refresh(menuId: Int, locationId: Int) {
         viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = null) }
             try {
-                val sections = apiClient.listSection(locationId, menuId)
-                _uiState.update { it.copy(loading = false, sections = sections, error = null) }
+                repository.refreshSections(locationId, menuId)
+                _uiState.update { it.copy(error = null) }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 logApiError(TAG, e)
-                _uiState.update { it.copy(loading = false, error = userMessageFor(e, context.resources)) }
+                _uiState.update {
+                    it.copy(loading = false, error = userMessageFor(e, context.resources))
+                }
             }
         }
     }
-
-    fun retry(menuId: Int, locationId: Int) = loadMenu(menuId, locationId)
 
     private companion object {
         const val TAG = "MenuViewModel"

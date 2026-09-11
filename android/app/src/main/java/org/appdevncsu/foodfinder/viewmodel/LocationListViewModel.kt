@@ -5,9 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,17 +14,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.appdevncsu.foodfinder.R
-import org.appdevncsu.foodfinder.data.APIClient
-import org.appdevncsu.foodfinder.data.HoursRange
-import org.appdevncsu.foodfinder.data.Location
 import org.appdevncsu.foodfinder.data.LocationListItem
 import org.appdevncsu.foodfinder.data.LocationStatus
 import org.appdevncsu.foodfinder.data.currentStatus
 import org.appdevncsu.foodfinder.data.logApiError
+import org.appdevncsu.foodfinder.data.ncsuZone
+import org.appdevncsu.foodfinder.data.repository.ContentRepository
 import org.appdevncsu.foodfinder.data.userMessageFor
+import java.time.LocalDate
 import javax.inject.Inject
-
-private const val DiningHallType = "dining-halls"
 
 private val typeOrder = listOf("dining-halls", "food-courts", "restaurants", "cafes", "markets")
 
@@ -40,7 +37,7 @@ private val locationComparator =
 
 @HiltViewModel
 class LocationListViewModel @Inject constructor(
-    private val apiClient: APIClient,
+    private val repository: ContentRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -51,25 +48,38 @@ class LocationListViewModel @Inject constructor(
         val error: String? = null,
     )
 
-    private val _locations = MutableStateFlow<List<Location>?>(null)
-    private val _hoursBySlug = MutableStateFlow<Map<String, List<HoursRange>>?>(null)
     private val _error = MutableStateFlow<String?>(null)
 
     // Bumped every time the app returns to the foreground so open/closed
-    // statuses recompute against the current time even if the hours payload is unchanged.
+    // statuses recompute against the current time even if the cache is unchanged.
     private val _clockTick = MutableStateFlow(0L)
 
+    // True until the first refresh finishes, so fresh installs show hour skeletons
+    // but an offline first run settles into "Hours unavailable" instead.
+    private val _initialLoad = MutableStateFlow(true)
+
+    private var refreshJob: Job? = null
+
     val uiState: StateFlow<UiState> =
-        combine(_locations, _hoursBySlug, _error, _clockTick) { locations, hours, error, _ ->
+        combine(
+            repository.observeHome(),
+            _error,
+            _clockTick,
+            _initialLoad,
+        ) { home, error, _, initialLoad ->
+            val today = LocalDate.now(ncsuZone).toString()
+            val todayHours = home.hoursByDate[today]
             UiState(
-                loading = locations == null && error == null,
-                hoursLoading = hours == null,
-                items = (locations ?: emptyList())
-                    .map { item ->
-                        val status = hours?.get(item.slug)?.let { ranges ->
-                            currentStatus(ranges, unavailableHoursText())
-                        }
-                        LocationListItem(item, status)
+                loading = home.locations == null && error == null,
+                hoursLoading = initialLoad && todayHours == null,
+                items = (home.locations ?: emptyList())
+                    .map { location ->
+                        LocationListItem(
+                            location,
+                            todayHours?.get(location.slug)?.let {
+                                currentStatus(it, unavailableHoursText())
+                            },
+                        )
                     }
                     .sortedWith(locationComparator),
                 error = error,
@@ -77,91 +87,44 @@ class LocationListViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState(loading = true))
 
     init {
-        loadLocations()
+        refresh(isRefresh = false)
     }
 
     fun loadLocations() {
-        viewModelScope.launch {
-            _locations.value = null
-            _hoursBySlug.value = null
-            _error.value = null
-            fetchAndApply(isRefresh = false)
-        }
+        _error.value = null
+        refresh(isRefresh = false)
     }
 
     /**
      * Called every time the app returns to the foreground. Bumps the clock so
-     * open/closed badges recompute instantly, then re-fetches in the background
-     * without clearing the current list (no loading skeletons).
+     * open/closed badges recompute instantly, then refreshes from the network.
      */
     fun onForegrounded() {
         _clockTick.value += 1
-        if (_locations.value == null) {
-            // Initial load still in flight; let it finish instead of doubling the fetch.
-            return
-        }
-        viewModelScope.launch {
-            fetchAndApply(isRefresh = true)
-        }
+        if (_initialLoad.value) return
+        refresh(isRefresh = true)
     }
 
-    private suspend fun fetchAndApply(isRefresh: Boolean) {
-        coroutineScope {
-            val locationsDeferred = async { runCatching { apiClient.listLocations() } }
-            val hoursDeferred = async { runCatching { apiClient.listHours() } }
-            val locationsResult = locationsDeferred.await()
-            val locations = locationsResult.getOrNull()?.locations
-            if (locations == null) {
-                val error = locationsResult.exceptionOrNull()
-                if (error != null) {
-                    logApiError(TAG, error)
-                }
-                // On a background refresh keep showing the existing list.
+    @Suppress("TooGenericExceptionCaught")
+    private fun refresh(isRefresh: Boolean) {
+        if (isRefresh && refreshJob?.isActive == true) return
+        refreshJob = viewModelScope.launch {
+            try {
+                repository.refreshHome()
+                _error.value = null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logApiError(TAG, e)
+                // A background refresh keeps showing whatever is cached.
                 if (!isRefresh) {
-                    _locations.value = emptyList()
-                    _hoursBySlug.value = emptyMap()
-                    _error.value = error?.let { userMessageFor(it, context.resources) }
-                        ?: context.getString(R.string.error_generic)
+                    _error.value = userMessageFor(e, context.resources)
                 }
-                return@coroutineScope
+            } finally {
+                _initialLoad.value = false
             }
-            _locations.value = locations
-            // A successful location fetch recovers from a previous full-screen error.
-            _error.value = null
-
-            val hoursResult = hoursDeferred.await()
-            hoursResult.exceptionOrNull()?.let { logApiError(TAG, it) }
-            val hoursBySlug = hoursResult.getOrNull()
-                ?.locations
-                ?.associate { it.slug to it.hours }
-            // On refresh keep old hours if the hours call failed.
-                ?: if (isRefresh) _hoursBySlug.value else null
-            // Hours are non-fatal: missing hours just render as "Hours unavailable".
-            _hoursBySlug.value = hoursBySlug ?: emptyMap()
-            prefetchOpenDiningHallMenus(locations, hoursBySlug)
         }
     }
-
-    // Warms the HTTP cache so a dining hall's menu list renders instantly when opened;
-    // fresh responses are served from cache without a network round trip.
-    private fun prefetchOpenDiningHallMenus(
-        locations: List<Location>,
-        hoursBySlug: Map<String, List<HoursRange>>?,
-    ) {
-        if (hoursBySlug == null) return
-        locations
-            .filter { it.type == DiningHallType }
-            .filter { currentStatus(hoursBySlug[it.slug], unavailableHoursText()).let(::isOpen) }
-            .forEach { location ->
-                viewModelScope.launch {
-                    runCatching { apiClient.listMenus(location.id) }
-                        .onFailure { logApiError(TAG, it) }
-                }
-            }
-    }
-
-    private fun isOpen(status: LocationStatus) =
-        status is LocationStatus.Open || status is LocationStatus.ClosingSoon
 
     private fun unavailableHoursText(): String = context.getString(R.string.hours_unavailable)
 

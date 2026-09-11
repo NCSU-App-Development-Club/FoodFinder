@@ -1,27 +1,19 @@
 package org.appdevncsu.foodfinder.data
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import okhttp3.Cache
-import okhttp3.CacheControl
-import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Response
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.create
 import retrofit2.http.GET
 import retrofit2.http.Path
-import java.io.File
+import retrofit2.http.Query
 
 @Serializable data class LocationList (
     val locations : List<Location>
@@ -94,7 +86,7 @@ interface APIClient {
     @GET("locations/{locId}/menus/{menuId}")
     suspend fun listSection(@Path("locId") locID : Int, @Path("menuId") menuID : Int) : SectionList
     @GET("hours")
-    suspend fun listHours(): HoursList
+    suspend fun listHours(@Query("date") date: String): HoursList
 }
 
 @Module
@@ -103,18 +95,11 @@ internal object APIClientModule {
 
     internal const val API_ORIGIN = "https://foodfinder-api.appdevncsu.org"
     private const val BASE_URL = "$API_ORIGIN/api/"
-    private const val HTTP_CACHE_DIR = "http-cache"
-    private const val HTTP_CACHE_SIZE_BYTES = 10L * 1024 * 1024
 
     private val json = Json { ignoreUnknownKeys = true }
 
     @Provides
-    fun provideOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
-        return OkHttpClient.Builder()
-            .cache(Cache(File(context.cacheDir, HTTP_CACHE_DIR), HTTP_CACHE_SIZE_BYTES))
-            .addInterceptor(OfflineFallbackInterceptor(context))
-            .build()
-    }
+    fun provideOkHttpClient(): OkHttpClient = OkHttpClient()
 
     @Provides
     fun provideAPIClient(okHttpClient: OkHttpClient): APIClient {
@@ -128,23 +113,5 @@ internal object APIClientModule {
             )
             .build()
             .create<APIClient>()
-    }
-}
-
-private class OfflineFallbackInterceptor(private val context: Context) : Interceptor {
-    override fun intercept(chain: Interceptor.Chain): Response {
-        val request = chain.request()
-        if (isOnline()) return chain.proceed(request)
-        val offlineRequest = request.newBuilder()
-            .cacheControl(CacheControl.FORCE_CACHE)
-            .build()
-        return chain.proceed(offlineRequest)
-    }
-
-    private fun isOnline(): Boolean {
-        val connectivityManager = context.getSystemService(ConnectivityManager::class.java)
-        val capabilities = connectivityManager.activeNetwork
-            ?.let(connectivityManager::getNetworkCapabilities)
-        return capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
     }
 }

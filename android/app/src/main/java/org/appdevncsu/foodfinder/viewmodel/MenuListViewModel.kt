@@ -5,22 +5,26 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.appdevncsu.foodfinder.data.APIClient
 import org.appdevncsu.foodfinder.data.Menu
 import org.appdevncsu.foodfinder.data.MenuList
 import org.appdevncsu.foodfinder.data.logApiError
+import org.appdevncsu.foodfinder.data.repository.ContentRepository
 import org.appdevncsu.foodfinder.data.userMessageFor
-import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
 class MenuListViewModel @Inject constructor(
-    private val apiClient: APIClient,
+    private val repository: ContentRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
     data class UiState(
@@ -33,36 +37,43 @@ class MenuListViewModel @Inject constructor(
 
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    @Suppress("TooGenericExceptionCaught")
+    private var observeJob: Job? = null
+    private var observedLocationId: Int? = null
+
     fun loadMenusForLocation(locationId: Int) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(loading = true, error = null) }
-            try {
-                val menus = sortMenus(apiClient.listMenus(locationId))
-                _uiState.update { it.copy(loading = false, menuList = menus, error = null) }
-                prefetchTodayMenus(menus)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                logApiError(TAG, e)
-                _uiState.update { it.copy(loading = false, error = userMessageFor(e, context.resources)) }
-            }
+        if (observedLocationId != locationId) {
+            observeJob?.cancel()
+            observedLocationId = locationId
+            observeJob = repository.observeMenus(locationId)
+                .map { it?.let(::sortMenus) }
+                .distinctUntilChanged()
+                .onEach { menus ->
+                    _uiState.update {
+                        it.copy(loading = menus == null && it.error == null, menuList = menus)
+                    }
+                }
+                .launchIn(viewModelScope)
         }
+        refresh(locationId)
     }
 
     fun retry(locationId: Int) = loadMenusForLocation(locationId)
 
-    // Warms the HTTP cache so today's menus render instantly when opened
-    private fun prefetchTodayMenus(menus: MenuList) {
-        val today = LocalDate.now().toString()
-        menus.menus
-            .filter { it.date == today }
-            .forEach { menu ->
-                viewModelScope.launch {
-                    runCatching { apiClient.listSection(menu.locationId, menu.id) }
-                        .onFailure { logApiError(TAG, it) }
+    @Suppress("TooGenericExceptionCaught")
+    private fun refresh(locationId: Int) {
+        viewModelScope.launch {
+            try {
+                repository.refreshMenus(locationId)
+                _uiState.update { it.copy(error = null) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logApiError(TAG, e)
+                _uiState.update {
+                    it.copy(loading = false, error = userMessageFor(e, context.resources))
                 }
             }
+        }
     }
 
     private companion object {
