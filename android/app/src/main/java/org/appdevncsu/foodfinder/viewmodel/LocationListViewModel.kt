@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -109,7 +110,6 @@ class LocationListViewModel @Inject constructor(
             val locationsDeferred = async { runCatching { apiClient.listLocations() } }
             val hoursDeferred = async { runCatching { apiClient.listHours() } }
             val locationsResult = locationsDeferred.await()
-            val hoursResult = hoursDeferred.await()
             val locations = locationsResult.getOrNull()?.locations
             if (locations == null) {
                 val error = locationsResult.exceptionOrNull()
@@ -125,17 +125,19 @@ class LocationListViewModel @Inject constructor(
                 }
                 return@coroutineScope
             }
+            _locations.value = locations
+            // A successful location fetch recovers from a previous full-screen error.
+            _error.value = null
+
+            val hoursResult = hoursDeferred.await()
             hoursResult.exceptionOrNull()?.let { logApiError(TAG, it) }
             val hoursBySlug = hoursResult.getOrNull()
                 ?.locations
                 ?.associate { it.slug to it.hours }
             // On refresh keep old hours if the hours call failed.
                 ?: if (isRefresh) _hoursBySlug.value else null
-            _locations.value = locations
             // Hours are non-fatal: missing hours just render as "Hours unavailable".
             _hoursBySlug.value = hoursBySlug ?: emptyMap()
-            // A successful refresh recovers from a previous full-screen error.
-            _error.value = null
             prefetchOpenDiningHallMenus(locations, hoursBySlug)
         }
     }
