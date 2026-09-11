@@ -80,17 +80,24 @@ data class HoursRange(
     val rawText: String, // e.g. "7:00am - 9:00pm" or "Closed all day - Labor Day"
 )
 
+/** One day of hours for a single location. */
+@Serializable
+data class DiningDayHours(
+    val date: String, // ISO date, e.g. "2026-09-07"
+    val hours: List<HoursRange>
+)
+
+/** All requested days of hours for a single location. */
 @Serializable
 data class DiningLocationSchedule(
     val slug: String,
     val name: String,
     val type: String,
-    val hours: List<HoursRange>
+    val days: List<DiningDayHours>
 )
 
 /** API response for /api/hours */
 @Serializable
 data class HoursResponse(
-    val date: String, // ISO date, e.g. "2026-09-07"
     val locations: List<DiningLocationSchedule>
 )

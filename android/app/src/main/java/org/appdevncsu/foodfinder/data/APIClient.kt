@@ -31,7 +31,6 @@ import retrofit2.http.Query
 }
 
 @Serializable data class HoursList (
-    val date : String,
     val locations : List<LocationHours>
 )
 
@@ -39,6 +38,11 @@ import retrofit2.http.Query
     val slug : String,
     val name : String,
     val type : String,
+    val days : List<DayHours>
+)
+
+@Serializable data class DayHours (
+    val date : String,
     val hours : List<HoursRange>
 )
 
@@ -86,7 +90,7 @@ interface APIClient {
     @GET("locations/{locId}/menus/{menuId}")
     suspend fun listSection(@Path("locId") locID : Int, @Path("menuId") menuID : Int) : SectionList
     @GET("hours")
-    suspend fun listHours(@Query("date") date: String): HoursList
+    suspend fun listHours(@Query("days") days: Int): HoursList
 }
 
 @Module

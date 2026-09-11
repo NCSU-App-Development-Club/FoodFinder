@@ -205,7 +205,9 @@ object Database {
         }
     }
 
-    fun getDiningSchedules(date: LocalDate): List<DiningLocationSchedule> {
+    /** Returns each location's hours for [days] consecutive days starting at [start]. */
+    fun getDiningSchedules(start: LocalDate, days: Int): List<DiningLocationSchedule> {
+        val end = start.plusDays((days - 1).toLong())
         return transaction {
             val locationsBySlug = DiningLocations
                 .leftJoin(MenuLocations, { DiningLocations.unitId }, { MenuLocations.id })
@@ -216,8 +218,12 @@ object Database {
 
             val hours = LocationHours
                 .selectAll()
-                .where { LocationHours.date eq date }
-                .orderBy(LocationHours.slug to SortOrder.ASC, LocationHours.seq to SortOrder.ASC)
+                .where { (LocationHours.date greaterEq start) and (LocationHours.date lessEq end) }
+                .orderBy(
+                    LocationHours.slug to SortOrder.ASC,
+                    LocationHours.date to SortOrder.ASC,
+                    LocationHours.seq to SortOrder.ASC
+                )
                 .map {
                     DiningLocationHours(
                         slug = it[LocationHours.slug],
@@ -232,13 +238,20 @@ object Database {
 
             locationsBySlug.map { (slug, nameAndType) ->
                 val (name, type) = nameAndType
+                val days = hours.filter { it.slug == slug }
+                    .groupBy { it.date }
+                    .toSortedMap()
+                    .map { (date, rows) ->
+                        DiningDayHours(
+                            date = date.toString(),
+                            hours = rows.sortedBy { it.seq }.map { it.toHoursRange() }
+                        )
+                    }
                 DiningLocationSchedule(
                     slug = slug,
                     name = name,
                     type = type,
-                    hours = hours.filter { it.slug == slug }
-                        .sortedBy { it.seq }
-                        .map { it.toHoursRange() }
+                    days = days
                 )
             }
         }

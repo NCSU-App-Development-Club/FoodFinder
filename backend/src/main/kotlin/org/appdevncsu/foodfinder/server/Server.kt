@@ -16,7 +16,6 @@ import org.appdevncsu.foodfinder.shared.DiningLocationSchedule
 import org.appdevncsu.foodfinder.shared.HoursResponse
 import org.appdevncsu.foodfinder.shared.NCSU_ZONE
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 fun main() {
     runServer()
@@ -96,25 +95,20 @@ fun Application.configureRouting() {
                 }
             }
             get("/hours") {
-                val dateParam = call.request.queryParameters["date"]
-                val date = if (dateParam == null) {
-                    LocalDate.now(NCSU_ZONE)
-                } else {
-                    try {
-                        LocalDate.parse(dateParam)
-                    } catch (e: DateTimeParseException) {
-                        call.respond(
-                            HttpStatusCode.BadRequest,
-                            mapOf("error" to "Invalid date '$dateParam'; expected YYYY-MM-DD")
-                        )
-                        return@get
-                    }
+                val daysParam = call.request.queryParameters["days"]
+                val days = daysParam?.toIntOrNull() ?: DEFAULT_HOURS_DAYS
+                if (days !in 1..MAX_HOURS_DAYS) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to "Invalid days '$daysParam'; expected 1..$MAX_HOURS_DAYS")
+                    )
+                    return@get
                 }
-                val locations = Database.getDiningSchedules(date)
+                val locations = Database.getDiningSchedules(LocalDate.now(NCSU_ZONE), days)
                 // Don't let clients cache an incomplete payload; retry soon instead.
                 val cacheControl = if (mostlyMissingHours(locations)) "no-store" else "public, max-age=3600"
                 call.response.header(HttpHeaders.CacheControl, cacheControl)
-                call.respond(HoursResponse(date = date.toString(), locations = locations))
+                call.respond(HoursResponse(locations = locations))
             }
         }
     }
@@ -122,6 +116,12 @@ fun Application.configureRouting() {
 
 // A location has no hours information when it has no ranges or every range is "unknown".
 private fun mostlyMissingHours(locations: List<DiningLocationSchedule>): Boolean {
-    val missing = locations.count { schedule -> schedule.hours.all { it.status == "unknown" } }
+    if (locations.isEmpty()) return true
+    val missing = locations.count { schedule ->
+        schedule.days.flatMap { it.hours }.all { it.status == "unknown" }
+    }
     return missing * 2 > locations.size
 }
+
+private const val DEFAULT_HOURS_DAYS = 3
+private const val MAX_HOURS_DAYS = 7

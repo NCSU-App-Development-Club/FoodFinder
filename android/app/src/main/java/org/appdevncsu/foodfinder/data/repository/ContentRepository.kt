@@ -3,7 +3,6 @@ package org.appdevncsu.foodfinder.data.repository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -72,14 +71,14 @@ class ContentRepository @Inject constructor(
 
     /** Fetches locations and the next [PrefetchDays] days of hours, then prefetches menus. */
     suspend fun refreshHome() = coroutineScope {
-        val today = LocalDate.now(ncsuZone)
         val locationsDeferred = async { apiClient.listLocations() }
-        val hoursDeferred = async { refreshHours(today) }
+        val hoursDeferred = async { fetch { apiClient.listHours(PrefetchDays) } }
         val locations = locationsDeferred.await()
         store(PayloadKeys.LOCATIONS, locations)
-        val todayHours = hoursDeferred.await()
-        appScope.launch { prefetchMenusForOpenLocations(locations.locations, todayHours) }
-        prune(today)
+        val hours = hoursDeferred.await()
+        if (hours != null) store(PayloadKeys.HOURS, hours)
+        appScope.launch { prefetchMenusForOpenLocations(locations.locations, hours) }
+        prune()
     }
 
     suspend fun refreshMenus(locationId: Int) {
@@ -90,23 +89,15 @@ class ContentRepository @Inject constructor(
         store(PayloadKeys.sections(locationId, menuId), apiClient.listSection(locationId, menuId))
     }
 
-    /** Hours are best-effort: a failure just leaves that day uncached. */
-    private suspend fun refreshHours(today: LocalDate): HoursList? = coroutineScope {
-        val dates = (0 until PrefetchDays).map { today.plusDays(it.toLong()) }
-        val fetched = dates
-            .map { date -> async { date to fetch { apiClient.listHours(date.toString()) } } }
-            .awaitAll()
-        fetched.forEach { (date, hours) ->
-            if (hours != null) store(PayloadKeys.hours(date), hours)
-        }
-        fetched.firstOrNull { (date, _) -> date == today }?.second
-    }
-
     private suspend fun prefetchMenusForOpenLocations(
         locations: List<Location>,
-        todayHours: HoursList?,
+        hours: HoursList?,
     ) {
-        val hoursBySlug = todayHours?.locations?.associate { it.slug to it.hours } ?: return
+        if (hours == null) return
+        val today = LocalDate.now(ncsuZone).toString()
+        val hoursBySlug = hours.locations.associate { location ->
+            location.slug to location.days.firstOrNull { it.date == today }?.hours.orEmpty()
+        }
         locations
             .filter { it.type == DiningHallType }
             .filter { isOpen(currentStatus(hoursBySlug[it.slug], "")) }
@@ -126,30 +117,22 @@ class ContentRepository @Inject constructor(
             }
     }
 
-    private suspend fun prune(today: LocalDate) {
-        payloadDao.keysWithPrefix(PayloadKeys.HoursPrefix).forEach { key ->
-            val date = runCatching {
-                LocalDate.parse(key.removePrefix(PayloadKeys.HoursPrefix))
-            }.getOrNull()
-            if (date != null && date.isBefore(today)) {
-                payloadDao.delete(key)
-            }
-        }
+    private suspend fun prune() {
         val cutoff = System.currentTimeMillis() - MenuRetentionMillis
-        payloadDao.deleteStaleMenus(cutoff, PayloadKeys.MenusPrefix)
-        payloadDao.deleteStaleSections(cutoff, PayloadKeys.SectionsPrefix)
+        payloadDao.deleteStale(cutoff, PayloadKeys.MenusPrefix)
+        payloadDao.deleteStale(cutoff, PayloadKeys.SectionsPrefix)
     }
 
     private fun observeHoursByDate(): Flow<Map<String, Map<String, List<HoursRange>>>> =
-        payloadDao.observeWithPrefix(PayloadKeys.HoursPrefix).map { rows ->
-            rows.associate { row ->
-                val date = row.key.removePrefix(PayloadKeys.HoursPrefix)
-                val bySlug = decode<HoursList>(row.body)
-                    ?.locations
-                    ?.associate { it.slug to it.hours }
-                    .orEmpty()
-                date to bySlug
-            }
+        payloadDao.observe(PayloadKeys.HOURS).map { body ->
+            decode<HoursList>(body)
+                ?.locations
+                .orEmpty()
+                .flatMap { location ->
+                    location.days.map { day -> Triple(day.date, location.slug, day.hours) }
+                }
+                .groupBy({ it.first }, { it.second to it.third })
+                .mapValues { (_, bySlug) -> bySlug.toMap() }
         }
 
     private fun isOpen(status: LocationStatus): Boolean =
