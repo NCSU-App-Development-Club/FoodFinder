@@ -3,6 +3,7 @@ package org.appdevncsu.foodfinder.shared
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonPrimitive
+import org.h2.jdbcx.JdbcConnectionPool
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.javatime.date
 import org.jetbrains.exposed.v1.jdbc.Database
@@ -17,16 +18,27 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.json
 import java.io.File
 import java.time.LocalDate
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 object Database {
 
     private val initialized = AtomicBoolean(false)
 
+    private var pool: JdbcConnectionPool? = null
+
     private const val MAX_VARCHAR_LENGTH = 128
 
     private const val TURNOVER_WINDOW_DAYS = 14L
     private const val TURNOVER_MIN_MENUS = 3L
+    private const val TURNOVER_CACHE_TTL_NANOS = 10L * 60 * 1_000_000_000 // 10 minutes
+
+    private data class TurnoverCacheEntry(
+        val expiresAtNanos: Long,
+        val value: Map<Int, Double>
+    )
+
+    private val turnoverCache = ConcurrentHashMap<Int, TurnoverCacheEntry>()
 
     // Locations sourced from NetNutrition (netmenu2.cbord.com), keyed by NetNutrition unit ID.
     private object MenuLocations : Table("menuLocations") {
@@ -43,6 +55,10 @@ object Database {
         val name = varchar("name", MAX_VARCHAR_LENGTH)
 
         override val primaryKey = PrimaryKey(id)
+
+        init {
+            index("menus_location_date", false, locationId, date)
+        }
     }
 
     private object MenuSections : Table("menuSections") {
@@ -58,6 +74,10 @@ object Database {
         val itemId = reference("itemId", MenuItems.id)
 
         override val primaryKey = PrimaryKey(sectionId, itemId, menuId)
+
+        init {
+            index("sections_to_items_menu", false, menuId)
+        }
     }
 
     private object MenuItems : Table("menuItems") {
@@ -93,12 +113,22 @@ object Database {
         val rawText = varchar("rawText", 256) // verbatim text from the site
 
         override val primaryKey = PrimaryKey(slug, date, seq)
+
+        init {
+            index("location_hours_date", false, date)
+        }
     }
 
     fun init() {
         if (!initialized.compareAndSet(false, true)) return
         val dbPath = File(dataDir(), "data.db").path
-        Database.connect("jdbc:h2:$dbPath", driver = "org.h2.Driver")
+        val pool = JdbcConnectionPool.create(
+            "jdbc:h2:$dbPath;DB_CLOSE_DELAY=-1",
+            "",
+            ""
+        ).apply { maxConnections = 8 }
+        this.pool = pool
+        Database.connect(pool)
 
         transaction {
             SchemaUtils.create(
@@ -326,6 +356,16 @@ object Database {
     }
 
     private fun getSectionTurnover(locationId: Int): Map<Int, Double> {
+        val now = System.nanoTime()
+        turnoverCache[locationId]?.let { entry ->
+            if (now < entry.expiresAtNanos) return entry.value
+        }
+        val turnover = computeSectionTurnover(locationId)
+        turnoverCache[locationId] = TurnoverCacheEntry(now + TURNOVER_CACHE_TTL_NANOS, turnover)
+        return turnover
+    }
+
+    private fun computeSectionTurnover(locationId: Int): Map<Int, Double> {
         val occurrences = SectionsToItems.itemId.count()
         val distinctNames = MenuItems.name.countDistinct()
         val distinctMenus = Menus.id.countDistinct()

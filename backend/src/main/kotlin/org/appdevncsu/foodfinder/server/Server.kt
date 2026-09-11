@@ -61,11 +61,12 @@ fun Application.configureRouting() {
             get("/locations") {
                 // Only changes when the scrapers learn something new, so clients can cache it.
                 call.response.header(HttpHeaders.CacheControl, "public, max-age=86400")
-                call.respond(mapOf("locations" to Database.getLocationSummaries()))
+                val locations = withContext(Dispatchers.IO) { Database.getLocationSummaries() }
+                call.respond(mapOf("locations" to locations))
             }
             get("/locations/{slug}/image") {
                 val slug = call.parameters["slug"]!!
-                val imageUrl = Database.getLocationImageUrl(slug)
+                val imageUrl = withContext(Dispatchers.IO) { Database.getLocationImageUrl(slug) }
                 if (imageUrl == null) {
                     call.respond(HttpStatusCode.NotFound, mapOf("error" to "No image for location '$slug'"))
                     return@get
@@ -87,11 +88,15 @@ fun Application.configureRouting() {
             route("/locations/{locationId}/menus") {
                 get {
                     call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
-                    call.respond(mapOf("menus" to Database.getMenus(call.parameters["locationId"]!!.toInt())))
+                    val locationId = call.parameters["locationId"]!!.toInt()
+                    val menus = withContext(Dispatchers.IO) { Database.getMenus(locationId) }
+                    call.respond(mapOf("menus" to menus))
                 }
                 get("/{menuId}") {
                     call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
-                    call.respond(mapOf("sections" to Database.getMenu(call.parameters["menuId"]!!.toInt())))
+                    val menuId = call.parameters["menuId"]!!.toInt()
+                    val sections = withContext(Dispatchers.IO) { Database.getMenu(menuId) }
+                    call.respond(mapOf("sections" to sections))
                 }
             }
             get("/hours") {
@@ -104,7 +109,9 @@ fun Application.configureRouting() {
                     )
                     return@get
                 }
-                val locations = Database.getDiningSchedules(LocalDate.now(NCSU_ZONE), days)
+                val locations = withContext(Dispatchers.IO) {
+                    Database.getDiningSchedules(LocalDate.now(NCSU_ZONE), days)
+                }
                 // Don't let clients cache an incomplete payload; retry soon instead.
                 val cacheControl = if (mostlyMissingHours(locations)) "no-store" else "public, max-age=3600"
                 call.response.header(HttpHeaders.CacheControl, cacheControl)
