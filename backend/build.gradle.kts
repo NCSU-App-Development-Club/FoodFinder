@@ -25,6 +25,8 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:3.5.2")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.5.2")
     implementation("io.ktor:ktor-server-call-logging:3.5.2")
+    implementation("io.ktor:ktor-server-compression:3.5.2")
+    implementation("io.ktor:ktor-server-conditional-headers:3.5.2")
     implementation("ch.qos.logback:logback-classic:1.6.3")
     implementation("org.quartz-scheduler:quartz:2.5.0")
 

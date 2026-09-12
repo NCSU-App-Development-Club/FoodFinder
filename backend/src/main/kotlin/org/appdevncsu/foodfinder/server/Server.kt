@@ -6,7 +6,10 @@ import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
 import io.ktor.server.plugins.calllogging.*
+import io.ktor.server.plugins.compression.*
+import io.ktor.server.plugins.conditionalheaders.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +20,7 @@ import org.appdevncsu.foodfinder.shared.DiningLocationSchedule
 import org.appdevncsu.foodfinder.shared.HoursResponse
 import org.appdevncsu.foodfinder.shared.NCSU_ZONE
 import org.slf4j.LoggerFactory
+import java.security.MessageDigest
 import java.time.LocalDate
 
 private val log = LoggerFactory.getLogger("server")
@@ -57,6 +61,21 @@ fun Application.module() {
         json()
     }
     install(CallLogging)
+    install(ConditionalHeaders)
+    install(Compression) {
+        gzip()
+    }
+}
+
+private suspend fun ApplicationCall.respondWithEtag(body: Any) {
+    response.header(HttpHeaders.ETag, etagFor(body))
+    respond(body)
+}
+
+private fun etagFor(body: Any): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+        .digest(body.toString().toByteArray(Charsets.UTF_8))
+    return "\"" + digest.joinToString("") { "%02x".format(it) } + "\""
 }
 
 fun Application.configureRouting() {
@@ -70,7 +89,7 @@ fun Application.configureRouting() {
                 // Only changes when the scrapers learn something new, so clients can cache it.
                 call.response.header(HttpHeaders.CacheControl, "public, max-age=86400")
                 val locations = withContext(Dispatchers.IO) { Database.getLocationSummaries() }
-                call.respond(mapOf("locations" to locations))
+                call.respondWithEtag(mapOf("locations" to locations))
             }
             get("/locations/{slug}/image") {
                 val slug = call.parameters["slug"]!!
@@ -98,13 +117,13 @@ fun Application.configureRouting() {
                     call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
                     val locationId = call.parameters["locationId"]!!.toInt()
                     val menus = withContext(Dispatchers.IO) { Database.getMenus(locationId) }
-                    call.respond(mapOf("menus" to menus))
+                    call.respondWithEtag(mapOf("menus" to menus))
                 }
                 get("/{menuId}") {
                     call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
                     val menuId = call.parameters["menuId"]!!.toInt()
                     val sections = withContext(Dispatchers.IO) { Database.getMenu(menuId) }
-                    call.respond(mapOf("sections" to sections))
+                    call.respondWithEtag(mapOf("sections" to sections))
                 }
             }
             get("/hours") {
@@ -123,7 +142,7 @@ fun Application.configureRouting() {
                 // Don't let clients cache an incomplete payload; retry soon instead.
                 val cacheControl = if (mostlyMissingHours(locations)) "no-store" else "public, max-age=3600"
                 call.response.header(HttpHeaders.CacheControl, cacheControl)
-                call.respond(HoursResponse(locations = locations))
+                call.respondWithEtag(HoursResponse(locations = locations))
             }
         }
     }
