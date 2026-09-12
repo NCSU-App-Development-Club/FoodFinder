@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import org.appdevncsu.foodfinder.R
@@ -109,7 +110,7 @@ internal fun MenuListContent(
                     for (menu in menus) {
                         MenuRow(
                             menu = menu,
-                            onClick = {
+                            onClick = dropUnlessResumed {
                                 navController.navigate(
                                     Route.Menu(menu.id, menu.name, menu.date, menu.locationId)
                                 )

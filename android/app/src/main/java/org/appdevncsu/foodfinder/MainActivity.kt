@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -71,7 +72,7 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
             val route = backStackEntry.toRoute<Route.MenuList>()
             ScreenScaffold(
                 title = route.locationName,
-                onBack = { navController.navigateUp() },
+                onBack = dropUnlessResumed { navController.navigateUp() },
             ) {
                 MenuList(route.unitId, navController)
             }
@@ -82,7 +83,7 @@ fun NavigationGraph(modifier: Modifier = Modifier) {
             ScreenScaffold(
                 title = route.menuName,
                 subtitle = formatMenuDate(route.date),
-                onBack = { navController.navigateUp() },
+                onBack = dropUnlessResumed { navController.navigateUp() },
             ) {
                 MenuSectionList(route.menuId, route.locationId)
             }
