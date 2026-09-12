@@ -2,12 +2,19 @@ package org.appdevncsu.foodfinder.data.repository
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.Json
 import org.appdevncsu.foodfinder.data.APIClient
 import org.appdevncsu.foodfinder.data.HoursList
@@ -38,6 +45,7 @@ data class HomeData(
 
 private const val DiningHallType = "dining-halls"
 private const val PrefetchDays = 3
+private const val PrefetchConcurrency = 4
 private const val MenuRetentionMillis = 7L * 24 * 60 * 60 * 1000
 private const val TAG = "ContentRepository"
 
@@ -55,6 +63,9 @@ class ContentRepository @Inject constructor(
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
+    private val refreshMutex = Mutex()
+    private var inFlightHomeRefresh: Deferred<Unit>? = null
+
     fun observeHome(): Flow<HomeData> =
         combine(observeLocations(), observeHoursByDate()) { locations, hoursByDate ->
             HomeData(locations, hoursByDate)
@@ -69,8 +80,18 @@ class ContentRepository @Inject constructor(
     fun observeSections(locationId: Int, menuId: Int): Flow<SectionList?> =
         payloadDao.observe(PayloadKeys.sections(locationId, menuId)).map { decode<SectionList>(it) }
 
-    /** Fetches locations and the next [PrefetchDays] days of hours, then prefetches menus. */
-    suspend fun refreshHome() = coroutineScope {
+    /**
+     * Fetches locations and the next [PrefetchDays] days of hours, then prefetches menus.
+     */
+    suspend fun refreshHome() {
+        val refresh = refreshMutex.withLock {
+            inFlightHomeRefresh?.takeIf { it.isActive }
+                ?: appScope.async { refreshHomeInternal() }.also { inFlightHomeRefresh = it }
+        }
+        refresh.await()
+    }
+
+    private suspend fun refreshHomeInternal() = coroutineScope {
         val locationsDeferred = async { apiClient.listLocations() }
         val hoursDeferred = async { fetch { apiClient.listHours(PrefetchDays) } }
         val locations = locationsDeferred.await()
@@ -79,6 +100,22 @@ class ContentRepository @Inject constructor(
         if (hours != null) store(PayloadKeys.HOURS, hours)
         appScope.launch { prefetchMenusForOpenLocations(locations.locations, hours) }
         prune()
+    }
+
+    /**
+     * Start fetching all the information for the location list page.
+     */
+    @Suppress("TooGenericExceptionCaught")
+    fun prefetchHome() {
+        appScope.launch {
+            try {
+                refreshHome()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logApiError(TAG, e)
+            }
+        }
     }
 
     suspend fun refreshMenus(locationId: Int) {
@@ -98,23 +135,40 @@ class ContentRepository @Inject constructor(
         val hoursBySlug = hours.locations.associate { location ->
             location.slug to location.days.firstOrNull { it.date == today }?.hours.orEmpty()
         }
-        locations
+        val openDiningHalls = locations
             .filter { it.type == DiningHallType }
             .filter { isOpen(currentStatus(hoursBySlug[it.slug], "")) }
-            .forEach { prefetchMenusAndTodaySections(it.id) }
-    }
 
-    private suspend fun prefetchMenusAndTodaySections(locationId: Int) {
-        val menus = fetch { apiClient.listMenus(locationId) } ?: return
-        store(PayloadKeys.menus(locationId), menus)
-        val today = LocalDate.now(ncsuZone).toString()
-        menus.menus
-            .filter { it.date == today }
-            .forEach { menu ->
-                fetch { apiClient.listSection(locationId, menu.id) }?.let { sections ->
-                    store(PayloadKeys.sections(locationId, menu.id), sections)
+        val semaphore = Semaphore(PrefetchConcurrency)
+        val todayMenus = supervisorScope {
+            openDiningHalls
+                .map { location ->
+                    async {
+                        semaphore.withPermit { prefetchMenus(location.id, today) }
+                    }
+                }
+                .awaitAll()
+                .flatten()
+        }
+        supervisorScope {
+            todayMenus.forEach { (locationId, menuId) ->
+                launch {
+                    semaphore.withPermit { prefetchSections(locationId, menuId) }
                 }
             }
+        }
+    }
+
+    private suspend fun prefetchMenus(locationId: Int, today: String): List<Pair<Int, Int>> {
+        val menus = fetch { apiClient.listMenus(locationId) } ?: return emptyList()
+        store(PayloadKeys.menus(locationId), menus)
+        return menus.menus.filter { it.date == today }.map { locationId to it.id }
+    }
+
+    private suspend fun prefetchSections(locationId: Int, menuId: Int) {
+        fetch { apiClient.listSection(locationId, menuId) }?.let { sections ->
+            store(PayloadKeys.sections(locationId, menuId), sections)
+        }
     }
 
     private suspend fun prune() {
