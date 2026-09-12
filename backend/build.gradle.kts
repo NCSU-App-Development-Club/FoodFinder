@@ -31,7 +31,7 @@ dependencies {
     implementation("org.quartz-scheduler:quartz:2.5.0")
 
     // Shared
-    implementation("com.h2database:h2:2.4.240")
+    implementation("org.xerial:sqlite-jdbc:3.53.2.1")
     implementation("org.jetbrains.exposed:exposed-core:1.4.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:1.4.0")
     implementation("org.jetbrains.exposed:exposed-java-time:1.4.0")

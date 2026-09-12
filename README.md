@@ -23,7 +23,7 @@ NC State Dining recently switched their menus to a new platform, [NetNutrition](
 
 ## Architecture
 
-The FoodFinder backend is a Kotlin application that runs a Ktor web server and a scraper. The scraper runs once daily, collecting the dining menus from NetNutrition and the hours from the NC State Dining website. It stores those in a local H2 database (similar to SQLite). Then, it queries that database to respond to client requests.
+The FoodFinder backend is a Kotlin application that runs a Ktor web server and a scraper. The scraper runs once daily, collecting the dining menus from NetNutrition and the hours from the NC State Dining website. It stores those in a local SQLite database. Then, it queries that database to respond to client requests.
 
 When designing the backend, extra care was taken to be polite to the upstream data sources. The amount of simultaneous inflight requests is limited, and the data is fetched on a schedule rather than on-demand.
 
@@ -42,7 +42,7 @@ Android app:
 Backend:
 
 - Ktor (web server)
-- H2 (flatfile database)
+- SQLite (flatfile database)
 - Exposed (ORM)
 - OkHttp (scraper HTTP client), Ksoup (HTML parsing)
 - Quartz (scheduled jobs), kotlinx.serialization (JSON)
@@ -72,7 +72,7 @@ The API currently has no authorization mechanism. Feel free to use it for your o
     ├── src/main/kotlin/org/appdevncsu/foodfinder/
     │   ├── scraper/  # NetNutrition + dining.ncsu.edu scrapers
     │   ├── server/   # API routes, image proxy, daily-scrape scheduler
-    │   └── shared/   # H2/Exposed database + data models
+    │   └── shared/   # SQLite/Exposed database + data models
     ├── config/deploy.yml  # Kamal deploy config
     └── Dockerfile
 ```
@@ -102,7 +102,7 @@ Available commands:
 | `serve`           | Run the API server on port 3000                          |
 | `serve-scheduled` | Run the API server and scrape daily at 12am Eastern Time |
 
-Persistent data (H2 database + image cache) lives in `$DATA_DIR`, defaulting to the working directory. The Docker image sets `DATA_DIR=/data` and exposes port 3000:
+Persistent data (SQLite database + image cache) lives in `$DATA_DIR`, defaulting to the working directory. The Docker image sets `DATA_DIR=/data` and exposes port 3000:
 
 ```bash
 cd backend

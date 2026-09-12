@@ -3,7 +3,6 @@ package org.appdevncsu.foodfinder.shared
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonPrimitive
-import org.h2.jdbcx.JdbcConnectionPool
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.javatime.date
 import org.jetbrains.exposed.v1.jdbc.Database
@@ -16,6 +15,8 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.json
+import org.sqlite.SQLiteConfig
+import org.sqlite.SQLiteDataSource
 import java.io.File
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
@@ -24,8 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 object Database {
 
     private val initialized = AtomicBoolean(false)
-
-    private var pool: JdbcConnectionPool? = null
 
     private const val MAX_VARCHAR_LENGTH = 128
 
@@ -122,13 +121,14 @@ object Database {
     fun init() {
         if (!initialized.compareAndSet(false, true)) return
         val dbPath = File(dataDir(), "data.db").path
-        val pool = JdbcConnectionPool.create(
-            "jdbc:h2:$dbPath;DB_CLOSE_DELAY=-1",
-            "",
-            ""
-        ).apply { maxConnections = 8 }
-        this.pool = pool
-        Database.connect(pool)
+        val config = SQLiteConfig().apply {
+            setJournalMode(SQLiteConfig.JournalMode.WAL)
+            setBusyTimeout(5_000)
+            setSynchronous(SQLiteConfig.SynchronousMode.NORMAL)
+            enforceForeignKeys(true)
+        }
+        val dataSource = SQLiteDataSource(config).apply { url = "jdbc:sqlite:$dbPath" }
+        Database.connect(dataSource)
 
         transaction {
             SchemaUtils.create(
