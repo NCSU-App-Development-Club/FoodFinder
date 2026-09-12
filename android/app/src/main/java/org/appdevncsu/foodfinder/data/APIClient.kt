@@ -1,11 +1,14 @@
 package org.appdevncsu.foodfinder.data
 
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.Cache
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -14,6 +17,7 @@ import retrofit2.create
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
+import java.io.File
 
 @Serializable data class LocationList (
     val locations : List<Location>
@@ -99,11 +103,15 @@ internal object APIClientModule {
 
     internal const val API_ORIGIN = "https://foodfinder-api.appdevncsu.org"
     private const val BASE_URL = "$API_ORIGIN/api/"
+    private const val HTTP_CACHE_SIZE_BYTES = 50L * 1024 * 1024
 
     private val json = Json { ignoreUnknownKeys = true }
 
     @Provides
-    fun provideOkHttpClient(): OkHttpClient = OkHttpClient()
+    fun provideOkHttpClient(@ApplicationContext context: Context): OkHttpClient =
+        OkHttpClient.Builder()
+            .cache(Cache(File(context.cacheDir, "http-cache"), HTTP_CACHE_SIZE_BYTES))
+            .build()
 
     @Provides
     fun provideAPIClient(okHttpClient: OkHttpClient): APIClient {
