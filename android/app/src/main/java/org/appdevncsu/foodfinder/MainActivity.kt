@@ -21,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -29,6 +31,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.appdevncsu.foodfinder.composables.FavoritesBarButton
+import org.appdevncsu.foodfinder.composables.FavoritesList
 import org.appdevncsu.foodfinder.composables.LocationList
 import org.appdevncsu.foodfinder.composables.MenuList
 import org.appdevncsu.foodfinder.composables.MenuSectionList
@@ -44,7 +48,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        pendingRoute.value = intent.toMenuRoute()
+        pendingRoute.value = intent.toRoute()
         setContent {
             FoodFinderTheme {
                 val route by pendingRoute.collectAsState()
@@ -60,7 +64,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        pendingRoute.value = intent.toMenuRoute()
+        pendingRoute.value = intent.toRoute()
     }
 }
 
@@ -91,35 +95,59 @@ fun NavigationGraph(
         predictivePopEnterTransition = { backEnterTransition() },
         predictivePopExitTransition = { backExitTransition() },
     ) {
-        composable<Route.Home> {
-            ScreenScaffold(title = stringResource(R.string.app_name)) {
-                LocationList(
-                    onLocationClick = { location ->
-                        navController.navigate(Route.MenuList(location.id, location.name))
-                    },
-                )
-            }
-        }
+        foodFinderDestinations(navController)
+    }
+}
 
-        composable<Route.MenuList> { backStackEntry ->
-            val route = backStackEntry.toRoute<Route.MenuList>()
-            ScreenScaffold(
-                title = route.locationName,
-                onBack = dropUnlessResumed { navController.navigateUp() },
-            ) {
-                MenuList(route.unitId, navController)
-            }
+private fun NavGraphBuilder.foodFinderDestinations(navController: NavController) {
+    composable<Route.Home> {
+        ScreenScaffold(
+            title = stringResource(R.string.app_name),
+            actions = {
+                FavoritesBarButton(onClick = { navController.navigate(Route.Favorites) })
+            },
+        ) {
+            LocationList(
+                onLocationClick = { location ->
+                    navController.navigate(Route.MenuList(location.id, location.name))
+                },
+            )
         }
+    }
 
-        composable<Route.Menu> { backStackEntry ->
-            val route = backStackEntry.toRoute<Route.Menu>()
-            ScreenScaffold(
-                title = route.menuName,
-                subtitle = formatMenuDate(route.date),
-                onBack = dropUnlessResumed { navController.navigateUp() },
-            ) {
-                MenuSectionList(route.menuId, route.locationId)
-            }
+    composable<Route.MenuList> { backStackEntry ->
+        val route = backStackEntry.toRoute<Route.MenuList>()
+        ScreenScaffold(
+            title = route.locationName,
+            onBack = dropUnlessResumed { navController.navigateUp() },
+        ) {
+            MenuList(route.unitId, navController)
+        }
+    }
+
+    composable<Route.Menu> { backStackEntry ->
+        val route = backStackEntry.toRoute<Route.Menu>()
+        ScreenScaffold(
+            title = route.menuName,
+            subtitle = formatMenuDate(route.date),
+            onBack = dropUnlessResumed { navController.navigateUp() },
+        ) {
+            MenuSectionList(route.menuId, route.locationId)
+        }
+    }
+
+    composable<Route.Favorites> {
+        ScreenScaffold(
+            title = stringResource(R.string.favorites_page_title),
+            onBack = dropUnlessResumed { navController.navigateUp() },
+        ) {
+            FavoritesList(
+                onMenuClick = { menu ->
+                    navController.navigate(
+                        Route.Menu(menu.menuId, menu.menuName, menu.date, menu.locationId)
+                    )
+                },
+            )
         }
     }
 }
@@ -152,16 +180,19 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.backExitTransition
 
 private const val InvalidId = -1
 
-/** A menu deep link from a favorite notification, if this intent carries one. */
-private fun Intent.toMenuRoute(): Route? {
+/** The deep link carried by a favorite notification, if this intent has one. */
+private fun Intent.toRoute(): Route? {
     val menuId = getIntExtra(FavoritesNotifier.EXTRA_MENU_ID, InvalidId)
-    if (menuId == InvalidId) return null
-    return Route.Menu(
-        menuId = menuId,
-        menuName = getStringExtra(FavoritesNotifier.EXTRA_MENU_NAME).orEmpty(),
-        date = getStringExtra(FavoritesNotifier.EXTRA_DATE).orEmpty(),
-        locationId = getIntExtra(FavoritesNotifier.EXTRA_LOCATION_ID, InvalidId),
-    )
+    return when {
+        getBooleanExtra(FavoritesNotifier.EXTRA_OPEN_FAVORITES, false) -> Route.Favorites
+        menuId == InvalidId -> null
+        else -> Route.Menu(
+            menuId = menuId,
+            menuName = getStringExtra(FavoritesNotifier.EXTRA_MENU_NAME).orEmpty(),
+            date = getStringExtra(FavoritesNotifier.EXTRA_DATE).orEmpty(),
+            locationId = getIntExtra(FavoritesNotifier.EXTRA_LOCATION_ID, InvalidId),
+        )
+    }
 }
 
 @Serializable
@@ -169,6 +200,10 @@ sealed class Route {
     @Serializable
     @SerialName("home")
     object Home : Route()
+
+    @Serializable
+    @SerialName("favorites")
+    object Favorites : Route()
 
     @Serializable
     @SerialName("menuList")

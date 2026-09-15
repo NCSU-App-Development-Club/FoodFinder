@@ -22,6 +22,11 @@
     <string name="notification_card_enable">Enable</string>
     <string name="notification_card_dismiss">Not now</string>
 
+    <!-- Favorites today page -->
+    <string name="favorites_page_title">Your favorites today</string>
+    <string name="favorites_empty">None of your favorites are being served today.</string>
+    <string name="favorites_view_menu">View menu</string>
+
     <!-- Date labels -->
     <string name="today">Today</string>
     <string name="tomorrow">Tomorrow</string>

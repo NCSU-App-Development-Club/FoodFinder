@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import org.appdevncsu.foodfinder.data.Menu
 import org.appdevncsu.foodfinder.data.MenuList
 import org.appdevncsu.foodfinder.data.logApiError
+import org.appdevncsu.foodfinder.data.mealOrder
 import org.appdevncsu.foodfinder.data.repository.ContentRepository
 import org.appdevncsu.foodfinder.data.userMessageFor
 import javax.inject.Inject
@@ -79,23 +80,12 @@ class MenuListViewModel @Inject constructor(
     private companion object {
         const val TAG = "MenuListViewModel"
 
-        private val mealOrder = mapOf(
-            "breakfast" to 0,
-            "lunch" to 1,
-            "dinner" to 2,
-            "daily" to 3,
-        )
-
-        fun getMealOrder(name: String): Int {
-            return mealOrder[name.trim().lowercase()] ?: Int.MAX_VALUE
-        }
-
         fun sortMenus(menus: MenuList): MenuList {
             return menus.copy(
                 menus = menus.menus.sortedWith(
                     compareBy(
                         { menu: Menu -> menu.date },
-                        { menu: Menu -> getMealOrder(menu.name) },
+                        { menu: Menu -> mealOrder(menu.name) },
                         { menu: Menu -> menu.name.lowercase() },
                         { menu: Menu -> menu.id },
                     )
