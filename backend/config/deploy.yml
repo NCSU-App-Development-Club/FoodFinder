@@ -25,7 +25,7 @@ proxy:
 
 # Credentials for your image host.
 registry:
-  server: localhost:5555
+  server: localhost:61429
   # Specify the registry server, if you're not using Docker Hub
   # server: registry.digitalocean.com / ghcr.io / ...
   # username: my-user
