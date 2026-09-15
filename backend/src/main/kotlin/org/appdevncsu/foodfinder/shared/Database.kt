@@ -37,6 +37,15 @@ object Database {
         val value: Map<Int, Double>
     )
 
+    private data class FavoriteRow(
+        val menuId: Int,
+        val menuName: String,
+        val date: LocalDate,
+        val locationId: Int,
+        val locationName: String,
+        val itemName: String,
+    )
+
     private val turnoverCache = ConcurrentHashMap<Int, TurnoverCacheEntry>()
 
     // Locations sourced from NetNutrition (netmenu2.cbord.com), keyed by NetNutrition unit ID.
@@ -312,6 +321,58 @@ object Database {
                     Menu(it[Menus.id], it[Menus.locationId], it[Menus.date], it[Menus.name])
                 }
         }
+    }
+
+    /**
+     * Returns the menus in the next [days] days (starting at [start]) that contain any of
+     * [names], grouped by menu. Matching is case- and whitespace-insensitive because menu
+     * item IDs are not stable across scrapes and only the name identifies a dish.
+     */
+    fun getMenusContainingItems(
+        names: Collection<String>,
+        start: LocalDate,
+        days: Int,
+    ): List<FavoriteMatch> {
+        val normalized = names.map { it.trim().lowercase() }.filter { it.isNotEmpty() }.distinct()
+        if (normalized.isEmpty()) return emptyList()
+        val end = start.plusDays((days - 1).toLong())
+
+        val rows = transaction {
+            MenuItems
+                .innerJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId }
+                .innerJoin(Menus) { SectionsToItems.menuId eq Menus.id }
+                .innerJoin(MenuLocations) { Menus.locationId eq MenuLocations.id }
+                .select(Menus.id, Menus.name, Menus.date, Menus.locationId, MenuLocations.name, MenuItems.name)
+                .where {
+                    (MenuItems.name.lowerCase() inList normalized) and
+                        (Menus.date greaterEq start) and (Menus.date lessEq end)
+                }
+                .orderBy(Menus.date to SortOrder.ASC, Menus.id to SortOrder.ASC)
+                .map {
+                    FavoriteRow(
+                        menuId = it[Menus.id],
+                        menuName = it[Menus.name],
+                        date = it[Menus.date],
+                        locationId = it[Menus.locationId],
+                        locationName = it[MenuLocations.name],
+                        itemName = it[MenuItems.name],
+                    )
+                }
+        }
+
+        return rows
+            .groupBy { it.menuId to it.locationId }
+            .map { (_, menuRows) ->
+                val first = menuRows.first()
+                FavoriteMatch(
+                    locationId = first.locationId,
+                    locationName = first.locationName,
+                    menuId = first.menuId,
+                    menuName = first.menuName,
+                    date = first.date,
+                    items = menuRows.map { it.itemName }.distinct(),
+                )
+            }
     }
 
     fun getMenu(menuId: Int): List<MenuSection> {

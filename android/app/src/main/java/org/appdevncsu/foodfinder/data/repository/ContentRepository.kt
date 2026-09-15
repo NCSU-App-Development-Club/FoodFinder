@@ -175,6 +175,7 @@ class ContentRepository @Inject constructor(
         val cutoff = System.currentTimeMillis() - MenuRetentionMillis
         payloadDao.deleteStale(cutoff, PayloadKeys.MenusPrefix)
         payloadDao.deleteStale(cutoff, PayloadKeys.SectionsPrefix)
+        payloadDao.deleteStale(cutoff, PayloadKeys.FavoriteMatchesPrefix)
     }
 
     private fun observeHoursByDate(): Flow<Map<String, Map<String, List<HoursRange>>>> =

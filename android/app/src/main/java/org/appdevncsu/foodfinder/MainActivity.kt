@@ -1,5 +1,6 @@
 package org.appdevncsu.foodfinder
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,6 +13,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -21,6 +26,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.appdevncsu.foodfinder.composables.LocationList
@@ -28,24 +34,51 @@ import org.appdevncsu.foodfinder.composables.MenuList
 import org.appdevncsu.foodfinder.composables.MenuSectionList
 import org.appdevncsu.foodfinder.composables.ScreenScaffold
 import org.appdevncsu.foodfinder.composables.formatMenuDate
+import org.appdevncsu.foodfinder.notifications.FavoritesNotifier
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val pendingRoute = MutableStateFlow<Route?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        pendingRoute.value = intent.toMenuRoute()
         setContent {
             FoodFinderTheme {
-                NavigationGraph(modifier = Modifier.fillMaxSize())
+                val route by pendingRoute.collectAsState()
+                NavigationGraph(
+                    modifier = Modifier.fillMaxSize(),
+                    pendingRoute = route,
+                    onConsumeRoute = { pendingRoute.value = null },
+                )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingRoute.value = intent.toMenuRoute()
     }
 }
 
 @Composable
-fun NavigationGraph(modifier: Modifier = Modifier) {
+fun NavigationGraph(
+    modifier: Modifier = Modifier,
+    pendingRoute: Route? = null,
+    onConsumeRoute: () -> Unit = {},
+) {
     val navController = rememberNavController()
+    val currentOnConsumeRoute by rememberUpdatedState(onConsumeRoute)
+
+    LaunchedEffect(pendingRoute) {
+        if (pendingRoute != null) {
+            navController.navigate(pendingRoute)
+            currentOnConsumeRoute()
+        }
+    }
 
     NavHost(
         navController,
@@ -116,6 +149,20 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.backExitTransition
         towards = AnimatedContentTransitionScope.SlideDirection.End,
         animationSpec = tween(NavTransitionDurationMillis),
     ) + fadeOut(animationSpec = tween(NavTransitionDurationMillis))
+
+private const val InvalidId = -1
+
+/** A menu deep link from a favorite notification, if this intent carries one. */
+private fun Intent.toMenuRoute(): Route? {
+    val menuId = getIntExtra(FavoritesNotifier.EXTRA_MENU_ID, InvalidId)
+    if (menuId == InvalidId) return null
+    return Route.Menu(
+        menuId = menuId,
+        menuName = getStringExtra(FavoritesNotifier.EXTRA_MENU_NAME).orEmpty(),
+        date = getStringExtra(FavoritesNotifier.EXTRA_DATE).orEmpty(),
+        locationId = getIntExtra(FavoritesNotifier.EXTRA_LOCATION_ID, InvalidId),
+    )
+}
 
 @Serializable
 sealed class Route {

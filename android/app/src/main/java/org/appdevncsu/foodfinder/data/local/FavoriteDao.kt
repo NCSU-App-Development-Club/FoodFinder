@@ -15,6 +15,9 @@ interface FavoriteDao {
     @Query("SELECT normalizedName FROM favorites")
     fun observeNormalizedNames(): Flow<List<String>>
 
+    @Query("SELECT displayName FROM favorites ORDER BY displayName")
+    suspend fun displayNames(): List<String>
+
     @Query("SELECT EXISTS(SELECT 1 FROM favorites WHERE normalizedName = :normalizedName)")
     suspend fun exists(normalizedName: String): Boolean
 

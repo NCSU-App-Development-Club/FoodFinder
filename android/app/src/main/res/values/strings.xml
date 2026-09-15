@@ -9,6 +9,19 @@
     <string name="favorite_add">Add to favorites</string>
     <string name="favorite_remove">Remove from favorites</string>
 
+    <!-- Favorites notifications -->
+    <string name="favorites_notification_channel">Favorite item alerts</string>
+    <string name="favorites_notification_channel_description">Daily alerts when your favorite items are on the menu</string>
+    <string name="favorites_notification_title">Your favorites are being served today</string>
+    <string name="favorites_notification_body">%1$s at %2$s %3$s</string>
+    <string name="favorites_notification_more">%1$s, and %2$d more</string>
+
+    <!-- Notification opt-in card -->
+    <string name="notification_card_title">Get notified about your favorites</string>
+    <string name="notification_card_body">We can let you know each morning when your favorite items are being served.</string>
+    <string name="notification_card_enable">Enable</string>
+    <string name="notification_card_dismiss">Not now</string>
+
     <!-- Date labels -->
     <string name="today">Today</string>
     <string name="tomorrow">Tomorrow</string>

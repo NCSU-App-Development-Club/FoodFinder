@@ -14,7 +14,9 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.create
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.Path
 import retrofit2.http.Query
 import java.io.File
@@ -112,7 +114,31 @@ interface APIClient {
 
     @GET("hours")
     suspend fun listHours(@Query("days") days: Int): HoursList
+
+    @HTTP(method = "QUERY", path = "favorites/menus", hasBody = true)
+    suspend fun favoriteMenus(@Body body: FavoriteRequest): FavoritesResponse
 }
+
+@Serializable
+data class FavoriteRequest(
+    val items: List<String>,
+    val days: Int = 1,
+)
+
+@Serializable
+data class FavoritesResponse(
+    val matches: List<FavoriteMatch>,
+)
+
+@Serializable
+data class FavoriteMatch(
+    val locationId: Int,
+    val locationName: String,
+    val menuId: Int,
+    val menuName: String,
+    val date: String,
+    val items: List<String>,
+)
 
 @Module
 @InstallIn(SingletonComponent::class)

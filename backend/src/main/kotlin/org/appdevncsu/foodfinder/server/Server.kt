@@ -17,6 +17,8 @@ import kotlinx.coroutines.withContext
 import org.appdevncsu.foodfinder.scraper.ScrapeTarget
 import org.appdevncsu.foodfinder.shared.Database
 import org.appdevncsu.foodfinder.shared.DiningLocationSchedule
+import org.appdevncsu.foodfinder.shared.FavoriteRequest
+import org.appdevncsu.foodfinder.shared.FavoritesResponse
 import org.appdevncsu.foodfinder.shared.HoursResponse
 import org.appdevncsu.foodfinder.shared.NCSU_ZONE
 import org.slf4j.LoggerFactory
@@ -144,6 +146,33 @@ fun Application.configureRouting() {
                 call.response.header(HttpHeaders.CacheControl, cacheControl)
                 call.respondWithEtag(HoursResponse(locations = locations))
             }
+            route("/favorites/menus") {
+                method(HttpMethod.Query) {
+                    handle {
+                        val request = call.receive<FavoriteRequest>()
+                        if (request.items.isEmpty()) {
+                            call.respond(
+                                HttpStatusCode.BadRequest,
+                                mapOf("error" to "Provide at least one favorite item")
+                            )
+                            return@handle
+                        }
+                        if (request.items.size > MAX_FAVORITE_ITEMS) {
+                            call.respond(
+                                HttpStatusCode.BadRequest,
+                                mapOf("error" to "At most $MAX_FAVORITE_ITEMS favorite items are supported")
+                            )
+                            return@handle
+                        }
+                        val days = request.days.coerceIn(1, MAX_FAVORITE_DAYS)
+                        val matches = withContext(Dispatchers.IO) {
+                            Database.getMenusContainingItems(request.items, LocalDate.now(NCSU_ZONE), days)
+                        }
+                        call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
+                        call.respondWithEtag(FavoritesResponse(matches = matches))
+                    }
+                }
+            }
         }
     }
 }
@@ -159,3 +188,5 @@ private fun mostlyMissingHours(locations: List<DiningLocationSchedule>): Boolean
 
 private const val DEFAULT_HOURS_DAYS = 3
 private const val MAX_HOURS_DAYS = 7
+private const val MAX_FAVORITE_ITEMS = 200
+private const val MAX_FAVORITE_DAYS = 14

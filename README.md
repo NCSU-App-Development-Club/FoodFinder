@@ -59,6 +59,7 @@ Base URL (production): https://foodfinder-api.appdevncsu.org. Routes are defined
 | `GET`  | `/api/locations/{locationId}/menus`          | —                                                       | List upcoming menus for a location                             |
 | `GET`  | `/api/locations/{locationId}/menus/{menuId}` | —                                                       | Get sections + items (with dietary `flags`) for one menu       |
 | `GET`  | `/api/hours`                                 | `days=N` (optional, 1–7, defaults to 3)                 | Hours per location for the next N days (today Eastern onward)  |
+| `QUERY` | `/api/favorites/menus`                      | JSON body: `items` (names), `days` (default 1)          | Upcoming menus containing any of the requested favorite items  |
 
 The API currently has no authorization mechanism. Feel free to use it for your own projects, as long as you set a distinct, custom `User-Agent` and respect the `Cache-Control` headers we set on our responses.
 

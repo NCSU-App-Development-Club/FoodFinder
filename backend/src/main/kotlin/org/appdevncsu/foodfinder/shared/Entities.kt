@@ -101,3 +101,31 @@ data class DiningLocationSchedule(
 data class HoursResponse(
     val locations: List<DiningLocationSchedule>
 )
+
+/** Request body for POST /api/favorites/menus. */
+@Serializable
+data class FavoriteRequest(
+    val items: List<String>,
+    val days: Int = 1,
+)
+
+/**
+ * A menu that contains one or more of the requested favorite items.
+ * Favorites are matched by name because menu item IDs change on every scrape.
+ */
+@Serializable
+data class FavoriteMatch(
+    val locationId: Int,
+    val locationName: String,
+    val menuId: Int,
+    val menuName: String,
+    @Serializable(with = LocalDateSerializer::class)
+    val date: LocalDate,
+    val items: List<String>,
+)
+
+/** API response for POST /api/favorites/menus. */
+@Serializable
+data class FavoritesResponse(
+    val matches: List<FavoriteMatch>,
+)

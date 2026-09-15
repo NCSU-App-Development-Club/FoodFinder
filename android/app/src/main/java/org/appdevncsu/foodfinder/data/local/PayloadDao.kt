@@ -20,4 +20,7 @@ interface PayloadDao {
             "AND key LIKE :prefix || '%'"
     )
     suspend fun deleteStale(cutoff: Long, prefix: String)
+
+    @Query("DELETE FROM cached_payload WHERE key LIKE :prefix || '%'")
+    suspend fun deleteByPrefix(prefix: String)
 }

@@ -1,12 +1,14 @@
 package org.appdevncsu.foodfinder.viewmodel
 
 import android.content.Context
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,10 +18,12 @@ import kotlinx.coroutines.launch
 import org.appdevncsu.foodfinder.R
 import org.appdevncsu.foodfinder.data.LocationListItem
 import org.appdevncsu.foodfinder.data.LocationStatus
+import org.appdevncsu.foodfinder.data.NotificationPreferences
 import org.appdevncsu.foodfinder.data.currentStatus
 import org.appdevncsu.foodfinder.data.logApiError
 import org.appdevncsu.foodfinder.data.ncsuZone
 import org.appdevncsu.foodfinder.data.repository.ContentRepository
+import org.appdevncsu.foodfinder.data.repository.FavoritesRepository
 import org.appdevncsu.foodfinder.data.userMessageFor
 import java.time.LocalDate
 import javax.inject.Inject
@@ -38,6 +42,8 @@ private val locationComparator =
 @HiltViewModel
 class LocationListViewModel @Inject constructor(
     private val repository: ContentRepository,
+    private val favoritesRepository: FavoritesRepository,
+    private val notificationPreferences: NotificationPreferences,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -46,6 +52,7 @@ class LocationListViewModel @Inject constructor(
         val hoursLoading: Boolean = true,
         val items: List<LocationListItem> = emptyList(),
         val error: String? = null,
+        val showNotificationPrompt: Boolean = false,
     )
 
     private val _error = MutableStateFlow<String?>(null)
@@ -58,7 +65,18 @@ class LocationListViewModel @Inject constructor(
     // but an offline first run settles into "Hours unavailable" instead.
     private val _initialLoad = MutableStateFlow(true)
 
+    private val _notificationsEnabled = MutableStateFlow(areNotificationsEnabled())
+
     private var refreshJob: Job? = null
+
+    // The opt-in card shows when the user has a favorite, hasn't answered the
+    // prompt yet, and notifications are off.
+    private val showNotificationPrompt: Flow<Boolean> =
+        combine(
+            notificationPreferences.promptDismissed,
+            _notificationsEnabled,
+            favoritesRepository.observeNormalizedNames(),
+        ) { dismissed, enabled, favorites -> !dismissed && !enabled && favorites.isNotEmpty() }
 
     val uiState: StateFlow<UiState> =
         combine(
@@ -66,7 +84,8 @@ class LocationListViewModel @Inject constructor(
             _error,
             _clockTick,
             _initialLoad,
-        ) { home, error, _, initialLoad ->
+            showNotificationPrompt,
+        ) { home, error, _, initialLoad, showPrompt ->
             val today = LocalDate.now(ncsuZone).toString()
             val todayHours = home.hoursByDate[today]
             UiState(
@@ -83,6 +102,7 @@ class LocationListViewModel @Inject constructor(
                     }
                     .sortedWith(locationComparator),
                 error = error,
+                showNotificationPrompt = showPrompt,
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState(loading = true))
 
@@ -101,9 +121,19 @@ class LocationListViewModel @Inject constructor(
      */
     fun onForegrounded() {
         _clockTick.value += 1
+        _notificationsEnabled.value = areNotificationsEnabled()
         if (_initialLoad.value) return
         refresh(isRefresh = true)
     }
+
+    /** The user answered the notification opt-in card, so stop showing it. */
+    fun onNotificationPromptAnswered() {
+        _notificationsEnabled.value = areNotificationsEnabled()
+        notificationPreferences.dismissPrompt()
+    }
+
+    private fun areNotificationsEnabled(): Boolean =
+        NotificationManagerCompat.from(context).areNotificationsEnabled()
 
     @Suppress("TooGenericExceptionCaught")
     private fun refresh(isRefresh: Boolean) {

@@ -1,6 +1,10 @@
 package org.appdevncsu.foodfinder.composables
 
+import android.Manifest
 import android.content.res.Configuration
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -89,10 +94,20 @@ fun LocationList(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
     val state by viewModel.uiState.collectAsState()
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { viewModel.onNotificationPromptAnswered() }
     LocationListContent(
         state = state,
         onLocationClick = onLocationClick,
         onRetry = viewModel::loadLocations,
+        onEnableNotifications = {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            viewModel.onNotificationPromptAnswered()
+        },
+        onDismissNotificationPrompt = viewModel::onNotificationPromptAnswered,
         modifier = modifier,
     )
 }
@@ -103,6 +118,8 @@ internal fun LocationListContent(
     onLocationClick: (Location) -> Unit,
     modifier: Modifier = Modifier,
     onRetry: () -> Unit = {},
+    onEnableNotifications: () -> Unit = {},
+    onDismissNotificationPrompt: () -> Unit = {},
 ) {
     if (state.error != null && state.items.isEmpty()) {
         ErrorState(
@@ -120,6 +137,15 @@ internal fun LocationListContent(
             .consumeBottomNavBarInsets(),
         contentPadding = bottomNavBarContentPadding(),
     ) {
+        if (state.showNotificationPrompt) {
+            item(key = "notification-prompt") {
+                NotificationPermissionCard(
+                    onEnable = onEnableNotifications,
+                    onDismiss = onDismissNotificationPrompt,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
+        }
         if (state.loading) {
             items(LocationSkeletonCount) {
                 SkeletonLocationItem(modifier = Modifier.padding(horizontal = 16.dp))
@@ -133,6 +159,46 @@ internal fun LocationListContent(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 isHoursLoading = state.hoursLoading,
             )
+        }
+    }
+}
+
+@Composable
+private fun NotificationPermissionCard(
+    onEnable: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.padding(vertical = 10.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        ),
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                text = stringResource(R.string.notification_card_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.notification_card_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(text = stringResource(R.string.notification_card_dismiss))
+                }
+                TextButton(onClick = onEnable) {
+                    Text(text = stringResource(R.string.notification_card_enable))
+                }
+            }
         }
     }
 }
@@ -344,6 +410,18 @@ private fun LocationListErrorPreview() {
             LocationListViewModel.UiState(error = stringResource(R.string.error_no_connection)),
             onLocationClick = {},
             onRetry = {},
+        )
+    }
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun NotificationPermissionCardPreview() {
+    FoodFinderTheme {
+        NotificationPermissionCard(
+            onEnable = {},
+            onDismiss = {},
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
     }
 }
