@@ -12,6 +12,9 @@ interface PayloadDao {
     @Query("SELECT body FROM cached_payload WHERE key = :key")
     fun observe(key: String): Flow<String?>
 
+    @Query("SELECT * FROM cached_payload WHERE key = :key")
+    suspend fun get(key: String): CachedPayload?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun put(payload: CachedPayload)
 

@@ -22,7 +22,8 @@ class FavoritesWorker @AssistedInject constructor(
     @Suppress("TooGenericExceptionCaught")
     override suspend fun doWork(): Result {
         return try {
-            val response = favoritesRepository.refreshMatches()
+            // Always fetch fresh data before deciding whether to notify.
+            val response = favoritesRepository.refreshMatches(force = true)
             if (response != null && response.matches.isNotEmpty()) {
                 FavoritesNotifier.notifyMatches(applicationContext, response.matches)
             }

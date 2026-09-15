@@ -57,7 +57,10 @@ class FavoritesViewModel @Inject constructor(
 
     fun toggleFavorite(name: String) {
         viewModelScope.launch {
-            repository.toggle(name)
+            // Removing patches the cache locally; adding needs a fetch to find its locations.
+            if (repository.toggle(name)) {
+                refreshMatchesBestEffort()
+            }
         }
     }
 
