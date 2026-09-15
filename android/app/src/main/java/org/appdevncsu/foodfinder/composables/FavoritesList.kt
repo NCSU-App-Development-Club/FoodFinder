@@ -120,20 +120,26 @@ private fun ExpandableLocationGroup(
 
         if (expanded) {
             group.menus.forEach { menu ->
-                Text(
-                    text = menu.menuName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = menu.menuName,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TextButton(onClick = { onMenuClick(menu) }) {
+                        Text(text = stringResource(R.string.favorites_view_menu))
+                    }
+                }
                 menu.items.forEach { itemName ->
                     MenuItem(
                         menuItem = Item(name = itemName, id = 0, sectionId = 0, flags = emptyList()),
                         isFavorite = true,
                         onToggleFavorite = { onToggleFavorite(itemName) },
                     )
-                }
-                TextButton(onClick = { onMenuClick(menu) }) {
-                    Text(text = stringResource(R.string.favorites_view_menu))
                 }
             }
         }
