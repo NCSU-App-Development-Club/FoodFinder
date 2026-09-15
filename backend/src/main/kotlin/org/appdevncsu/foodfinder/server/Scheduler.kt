@@ -26,12 +26,12 @@ class DailyScrapeJob : Job {
     }
 }
 
-// Fires at 08:00 America/New_York every day.
+// Fires at 06:00 America/New_York every day.
 fun dailyScrapeTrigger(): Trigger =
     TriggerBuilder.newTrigger()
         .withIdentity("daily-scrape")
         .withSchedule(
-            CronScheduleBuilder.dailyAtHourAndMinute(8, 0)
+            CronScheduleBuilder.dailyAtHourAndMinute(6, 0)
                 .inTimeZone(TimeZone.getTimeZone(NCSU_ZONE)),
         )
         .build()
@@ -43,7 +43,7 @@ fun startDailyScrapeScheduler(): Scheduler {
         dailyScrapeTrigger(),
     )
     scheduler.start()
-    log.info("Daily scrape scheduled for 08:00 {}", NCSU_ZONE)
+    log.info("Daily scrape scheduled for 06:00 {}", NCSU_ZONE)
     Runtime.getRuntime().addShutdownHook(Thread { scheduler.shutdown(true) })
     return scheduler
 }

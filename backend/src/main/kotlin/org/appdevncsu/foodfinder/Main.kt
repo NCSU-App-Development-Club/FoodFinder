@@ -10,7 +10,7 @@ private fun usage() {
         "Please specify one command-line argument:\n" +
             "\tscrape:          Run the scraper once and exit\n" +
             "\tserve:           Run the API server\n" +
-            "\tserve-scheduled: Run the API server and scrape daily at 8am America/New_York",
+            "\tserve-scheduled: Run the API server and scrape daily at 6am America/New_York",
     )
     exitProcess(1)
 }
