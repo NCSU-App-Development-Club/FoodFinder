@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- Debug-only: run the favorites worker on demand via adb broadcast. -->
+        <receiver
+            android:name=".FavoritesDebugReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="org.appdevncsu.foodfinder.DEBUG_RUN_FAVORITES" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>
