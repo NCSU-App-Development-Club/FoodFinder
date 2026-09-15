@@ -61,6 +61,7 @@ fun MenuSectionList(
     MenuSectionListContent(
         state = state,
         onRetry = { viewModel.retry(menuId, locationId) },
+        onToggleFavorite = { viewModel.toggleFavorite(it) },
         modifier = modifier,
     )
 }
@@ -70,6 +71,7 @@ internal fun MenuSectionListContent(
     state: MenuViewModel.UiState,
     modifier: Modifier = Modifier,
     onRetry: () -> Unit = {},
+    onToggleFavorite: (String) -> Unit = {},
 ) {
     val sections = state.sections
     LazyColumn(
@@ -98,14 +100,23 @@ internal fun MenuSectionListContent(
 
         sections.sections.forEach { section ->
             item {
-                ExpandableMenuSection(section = section)
+                ExpandableMenuSection(
+                    section = section,
+                    favoriteNames = state.favoriteNames,
+                    onToggleFavorite = onToggleFavorite,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ExpandableMenuSection(section: Section, modifier: Modifier = Modifier) {
+private fun ExpandableMenuSection(
+    section: Section,
+    favoriteNames: Set<String>,
+    onToggleFavorite: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     var expanded by rememberSaveable { mutableStateOf(true) }
     Column(
         modifier = modifier.padding(
@@ -137,7 +148,11 @@ private fun ExpandableMenuSection(section: Section, modifier: Modifier = Modifie
 
         if (expanded) {
             section.items.forEach { menuItem ->
-                MenuItem(menuItem = menuItem)
+                MenuItem(
+                    menuItem = menuItem,
+                    isFavorite = menuItem.normalizedName in favoriteNames,
+                    onToggleFavorite = { onToggleFavorite(menuItem.name) },
+                )
             }
         }
     }

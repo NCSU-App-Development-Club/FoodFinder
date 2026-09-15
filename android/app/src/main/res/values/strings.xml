@@ -5,6 +5,10 @@
     <string name="retry">Retry</string>
     <string name="back">Back</string>
 
+    <!-- Favorites -->
+    <string name="favorite_add">Add to favorites</string>
+    <string name="favorite_remove">Remove from favorites</string>
+
     <!-- Date labels -->
     <string name="today">Today</string>
     <string name="tomorrow">Tomorrow</string>

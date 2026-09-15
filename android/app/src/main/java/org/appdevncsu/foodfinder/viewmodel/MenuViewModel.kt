@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -18,18 +19,21 @@ import kotlinx.coroutines.launch
 import org.appdevncsu.foodfinder.data.SectionList
 import org.appdevncsu.foodfinder.data.logApiError
 import org.appdevncsu.foodfinder.data.repository.ContentRepository
+import org.appdevncsu.foodfinder.data.repository.FavoritesRepository
 import org.appdevncsu.foodfinder.data.userMessageFor
 import javax.inject.Inject
 
 @HiltViewModel
 class MenuViewModel @Inject constructor(
     private val repository: ContentRepository,
+    private val favoritesRepository: FavoritesRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
     data class UiState(
         val loading: Boolean = true,
         val sections: SectionList? = null,
         val error: String? = null,
+        val favoriteNames: Set<String> = emptySet(),
     )
 
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState())
@@ -44,16 +48,27 @@ class MenuViewModel @Inject constructor(
         if (observedKey != key) {
             observeJob?.cancel()
             observedKey = key
-            observeJob = repository.observeSections(locationId, menuId)
+            observeJob = combine(
+                repository.observeSections(locationId, menuId),
+                favoritesRepository.observeNormalizedNames(),
+            ) { sections, favorites -> sections to favorites }
                 .distinctUntilChanged()
-                .onEach { sections ->
+                .onEach { (sections, favorites) ->
                     _uiState.update {
-                        it.copy(loading = sections == null && it.error == null, sections = sections)
+                        it.copy(
+                            loading = sections == null && it.error == null,
+                            sections = sections,
+                            favoriteNames = favorites,
+                        )
                     }
                 }
                 .launchIn(viewModelScope)
         }
         refresh(menuId, locationId)
+    }
+
+    fun toggleFavorite(name: String) {
+        viewModelScope.launch { favoritesRepository.toggle(name) }
     }
 
     fun retry(menuId: Int, locationId: Int) = loadMenu(menuId, locationId)

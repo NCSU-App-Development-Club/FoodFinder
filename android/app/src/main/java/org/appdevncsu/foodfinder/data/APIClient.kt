@@ -19,80 +19,97 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import java.io.File
 
-@Serializable data class LocationList (
-    val locations : List<Location>
+@Serializable
+data class LocationList(
+    val locations: List<Location>
 )
 
-@Serializable data class Location (
-    val name : String,
-    val id : Int,
-    val slug : String? = null,
-    val type : String? = null,
-    val imageUrl : String? = null
+@Serializable
+data class Location(
+    val name: String,
+    val id: Int,
+    val slug: String? = null,
+    val type: String? = null,
+    val imageUrl: String? = null
 ) {
-    val absoluteImageUrl : String?
+    val absoluteImageUrl: String?
         get() = imageUrl?.let { "${APIClientModule.API_ORIGIN}$it" }
 }
 
-@Serializable data class HoursList (
-    val locations : List<LocationHours>
+@Serializable
+data class HoursList(
+    val locations: List<LocationHours>
 )
 
-@Serializable data class LocationHours (
-    val slug : String,
-    val name : String,
-    val type : String,
-    val days : List<DayHours>
+@Serializable
+data class LocationHours(
+    val slug: String,
+    val name: String,
+    val type: String,
+    val days: List<DayHours>
 )
 
-@Serializable data class DayHours (
-    val date : String,
-    val hours : List<HoursRange>
+@Serializable
+data class DayHours(
+    val date: String,
+    val hours: List<HoursRange>
 )
 
-@Serializable data class HoursRange (
-    val status : String,
-    val openMinute : Int? = null,
-    val closeMinute : Int? = null,
-    val rawText : String
+@Serializable
+data class HoursRange(
+    val status: String,
+    val openMinute: Int? = null,
+    val closeMinute: Int? = null,
+    val rawText: String
 )
 
-@Serializable data class MenuList (
-    val menus : List<Menu>
+@Serializable
+data class MenuList(
+    val menus: List<Menu>
 )
 
 
-@Serializable data class Menu (
-    val name : String,
-    val id : Int,
-    val date : String,
-    val locationId : Int
+@Serializable
+data class Menu(
+    val name: String,
+    val id: Int,
+    val date: String,
+    val locationId: Int
 )
 
-@Serializable data class SectionList (
-    val sections : List<Section>
+@Serializable
+data class SectionList(
+    val sections: List<Section>
 )
 
-@Serializable data class Section (
-    val name : String,
-    val id : Int,
-    val items : List<Item>
+@Serializable
+data class Section(
+    val name: String,
+    val id: Int,
+    val items: List<Item>
 )
 
-@Serializable data class Item (
-    val name : String,
-    val id : Int,
-    val sectionId : Int,
-    val flags : List<String>
-)
+@Serializable
+data class Item(
+    val name: String,
+    val id: Int,
+    val sectionId: Int,
+    val flags: List<String>
+) {
+    val normalizedName: String
+        get() = normalizeFavoriteName(name)
+}
 
 interface APIClient {
     @GET("locations")
     suspend fun listLocations(): LocationList
+
     @GET("locations/{locId}/menus")
-    suspend fun listMenus(@Path("locId") locId : Int) : MenuList
+    suspend fun listMenus(@Path("locId") locId: Int): MenuList
+
     @GET("locations/{locId}/menus/{menuId}")
-    suspend fun listSection(@Path("locId") locID : Int, @Path("menuId") menuID : Int) : SectionList
+    suspend fun listSection(@Path("locId") locID: Int, @Path("menuId") menuID: Int): SectionList
+
     @GET("hours")
     suspend fun listHours(@Query("days") days: Int): HoursList
 }
