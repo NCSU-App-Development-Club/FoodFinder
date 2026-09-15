@@ -90,7 +90,7 @@ object FavoritesNotifier {
         val channel = NotificationChannel(
             CHANNEL_ID,
             context.getString(R.string.favorites_notification_channel),
-            NotificationManager.IMPORTANCE_DEFAULT,
+            NotificationManager.IMPORTANCE_LOW,
         ).apply {
             description = context.getString(R.string.favorites_notification_channel_description)
         }
