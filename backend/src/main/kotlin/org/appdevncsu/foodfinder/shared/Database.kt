@@ -363,8 +363,9 @@ object Database {
     }
 
     /** The earliest menu date stored, i.e. roughly when data collection began. */
-    private fun getEarliestMenuDate(): LocalDate? {
+    private fun getEarliestMenuDate(locationId: Int): LocalDate? {
         return Menus.select(Menus.date.min())
+            .where { Menus.locationId eq locationId }
             .firstOrNull()
             ?.get(Menus.date.min())
     }
@@ -509,7 +510,7 @@ object Database {
         if (normalized.isEmpty()) return null
         val windowStart = endDate.minusDays(HISTORY_WINDOW_DAYS - 1)
         return transaction {
-            val collectionStart = getEarliestMenuDate()
+            val collectionStart = getEarliestMenuDate(locationId)
             val observedStart = maxOf(windowStart, collectionStart ?: windowStart)
             val observedDays = ChronoUnit.DAYS.between(observedStart, endDate) + 1
 
