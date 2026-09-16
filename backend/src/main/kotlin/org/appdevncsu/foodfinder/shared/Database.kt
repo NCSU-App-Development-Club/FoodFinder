@@ -46,6 +46,13 @@ object Database {
         val itemName: String,
     )
 
+    private data class MenuQueryData(
+        val menuDate: LocalDate,
+        val turnover: Map<Int, Double>,
+        val firstSeenByName: Map<String, LocalDate>,
+        val rows: List<ResultRow>,
+    )
+
     private val turnoverCache = ConcurrentHashMap<Int, TurnoverCacheEntry>()
 
     // Locations sourced from NetNutrition (netmenu2.cbord.com), keyed by NetNutrition unit ID.
@@ -376,25 +383,31 @@ object Database {
     }
 
     fun getMenu(menuId: Int): List<MenuSection> {
-        val (turnover, rows) = transaction {
-            val locationId = Menus
+        val data = transaction {
+            val menu = Menus
                 .selectAll()
                 .where { Menus.id eq menuId }
-                .singleOrNull()?.get(Menus.locationId)
+                .singleOrNull()
                 ?: return@transaction null
+            val locationId = menu[Menus.locationId]
 
-            val turnover = getSectionTurnover(locationId)
             val rows = MenuItems
                 .innerJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId and (SectionsToItems.menuId eq menuId) }
                 .leftJoin(MenuSections) { MenuSections.id eq SectionsToItems.sectionId }
                 .selectAll()
                 .orderBy(MenuSections.id to SortOrder.ASC).toList()
-            turnover to rows
+
+            MenuQueryData(
+                menuDate = menu[Menus.date],
+                turnover = getSectionTurnover(locationId),
+                firstSeenByName = getFirstSeenByLocation(locationId),
+                rows = rows,
+            )
         } ?: return emptyList()
 
         val sections = mutableListOf<MenuSection>()
         var section: MenuSection? = null
-        for (row in rows) {
+        for (row in data.rows) {
             if (section == null || row[MenuSections.id] != section.id) {
                 if (section != null) sections.add(section)
                 section = MenuSection(
@@ -403,12 +416,15 @@ object Database {
                     items = mutableListOf()
                 )
             }
+            val name = row[MenuItems.name]
+            val firstSeen = data.firstSeenByName[name.trim().lowercase()]
             (section.items as MutableList).add(
                 MenuItem(
                     id = row[MenuItems.id],
                     sectionId = row[SectionsToItems.sectionId],
-                    name = row[MenuItems.name],
-                    flags = row[MenuItems.flags]
+                    name = name,
+                    flags = row[MenuItems.flags],
+                    isNew = firstSeen == null || firstSeen >= data.menuDate
                 )
             )
         }
@@ -416,11 +432,32 @@ object Database {
 
         return sections.sortedWith(
             compareBy(
-                { if (it.id in turnover) 1 else 0 },
-                { turnover[it.id] ?: 0.0 },
+                { if (it.id in data.turnover) 1 else 0 },
+                { data.turnover[it.id] ?: 0.0 },
                 { it.id }
             )
         )
+    }
+
+    /**
+     * Maps each normalized menu item name to the earliest menu date it appeared in at
+     * [locationId]. Item IDs are recreated on every scrape, so only the name is stable.
+     * Used to flag items that are new to a location.
+     */
+    private fun getFirstSeenByLocation(locationId: Int): Map<String, LocalDate> {
+        val normalizedName = MenuItems.name.lowerCase()
+        val earliestDate = Menus.date.min()
+        return MenuItems
+            .innerJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId }
+            .innerJoin(Menus) { SectionsToItems.menuId eq Menus.id }
+            .select(normalizedName, earliestDate)
+            .where { Menus.locationId eq locationId }
+            .groupBy(normalizedName)
+            .mapNotNull {
+                val earliest = it[earliestDate] ?: return@mapNotNull null
+                it[normalizedName].trim().lowercase() to earliest
+            }
+            .toMap()
     }
 
     private fun getSectionTurnover(locationId: Int): Map<Int, Double> {

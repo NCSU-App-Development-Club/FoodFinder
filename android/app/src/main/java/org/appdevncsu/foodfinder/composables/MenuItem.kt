@@ -1,6 +1,7 @@
 package org.appdevncsu.foodfinder.composables
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -47,15 +48,33 @@ fun MenuItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = menuItem.name,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isFavorite) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = menuItem.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (isFavorite) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (menuItem.isNew) {
+                    Text(
+                        text = stringResource(R.string.menu_item_new),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.tertiaryContainer)
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(4.dp))
             BadgeList(menuItem)
         }

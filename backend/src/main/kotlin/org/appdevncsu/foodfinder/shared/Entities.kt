@@ -35,7 +35,9 @@ data class MenuItem(
     val id: Int,
     val sectionId: Int, // -> MenuSection
     val name: String, // e.g. Freshly Scrambled Eggs
-    val flags: List<String> // e.g. Halal, Vegan, Wolf Approved
+    val flags: List<String>, // e.g. Halal, Vegan, Wolf Approved
+    // True when this menu is the item name's first appearance at this location.
+    val isNew: Boolean = false
 )
 
 /** A location from dining.ncsu.edu */

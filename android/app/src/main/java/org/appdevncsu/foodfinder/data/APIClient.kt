@@ -96,7 +96,8 @@ data class Item(
     val name: String,
     val id: Int,
     val sectionId: Int,
-    val flags: List<String>
+    val flags: List<String>,
+    val isNew: Boolean = false
 ) {
     val normalizedName: String
         get() = normalizeFavoriteName(name)

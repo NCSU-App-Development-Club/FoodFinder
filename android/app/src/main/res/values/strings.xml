@@ -37,6 +37,9 @@
     <string name="status_closed">Closed</string>
     <string name="hours_unavailable">Hours unavailable</string>
 
+    <!-- Menu items -->
+    <string name="menu_item_new">New</string>
+
     <!-- Empty states -->
     <string name="empty_menus">No menus available for this location</string>
 

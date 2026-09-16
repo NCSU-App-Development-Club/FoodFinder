@@ -310,6 +310,7 @@ private val sampleSections = SectionList(
                     id = 2,
                     sectionId = 1,
                     flags = listOf("Wolf Approved", "Vegetarian", "Vegan"),
+                    isNew = true,
                 ),
             ),
         ),
