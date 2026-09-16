@@ -82,6 +82,17 @@ android {
     buildFeatures {
         compose = true
     }
+    lint {
+        // Errors fail CI; warnings are still uploaded via the SARIF report.
+        abortOnError = true
+        warningsAsErrors = false
+        // Only run lint once in CI (debug); release is exercised by the build.
+        checkReleaseBuilds = false
+        sarifReport = true
+        sarifOutput = rootProject.layout.projectDirectory.file("lint-report.sarif").asFile
+        // Uncomment to adopt incrementally without failing on existing findings:
+        // baseline = file("lint-baseline.xml")
+    }
 }
 
 dependencies {

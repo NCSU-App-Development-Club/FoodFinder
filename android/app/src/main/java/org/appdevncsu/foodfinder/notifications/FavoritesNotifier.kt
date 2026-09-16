@@ -1,6 +1,7 @@
 package org.appdevncsu.foodfinder.notifications
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -27,6 +28,7 @@ object FavoritesNotifier {
     private const val CHANNEL_ID = "favorites"
     private const val NOTIFICATION_ID = 1001
 
+    @SuppressLint("MissingPermission")
     fun notifyMatches(context: Context, matches: List<FavoriteMatch>) {
         if (matches.isEmpty() || !canNotify(context)) return
         createChannel(context)

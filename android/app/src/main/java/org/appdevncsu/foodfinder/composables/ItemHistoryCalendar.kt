@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -240,11 +241,12 @@ private fun MonthHeader(
 
 @Composable
 private fun WeekdayHeader(modifier: Modifier = Modifier) {
+    val locale = LocalConfiguration.current.locales[0]
     Row(modifier = modifier.fillMaxWidth()) {
         repeat(DaysPerRow) { index ->
             val dayOfWeek = if (index == 0) java.time.DayOfWeek.SUNDAY.value else index
             val label = java.time.DayOfWeek.of(dayOfWeek)
-                .getDisplayName(java.time.format.TextStyle.NARROW, Locale.getDefault())
+                .getDisplayName(java.time.format.TextStyle.NARROW, locale)
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
