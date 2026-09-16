@@ -82,21 +82,26 @@ fun MenuItem(
             Spacer(modifier = Modifier.height(4.dp))
             BadgeList(menuItem)
         }
-        IconButton(onClick = onToggleFavorite) {
-            Icon(
-                painter = painterResource(
-                    if (isFavorite) R.drawable.star_filled_24px else R.drawable.star_24px
-                ),
-                contentDescription = stringResource(
-                    if (isFavorite) R.string.favorite_remove else R.string.favorite_add
-                ),
-                tint = if (isFavorite) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.outline
-                },
-            )
-        }
+        FavoriteToggleButton(isFavorite = isFavorite, onToggleFavorite = onToggleFavorite)
+    }
+}
+
+@Composable
+private fun FavoriteToggleButton(isFavorite: Boolean, onToggleFavorite: () -> Unit) {
+    IconButton(onClick = onToggleFavorite) {
+        Icon(
+            painter = painterResource(
+                if (isFavorite) R.drawable.star_filled_24px else R.drawable.star_24px
+            ),
+            contentDescription = stringResource(
+                if (isFavorite) R.string.favorite_remove else R.string.favorite_add
+            ),
+            tint = if (isFavorite) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.outline
+            },
+        )
     }
 }
 

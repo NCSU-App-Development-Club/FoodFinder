@@ -56,7 +56,7 @@ private val HistoryMonthFormatter: DateTimeFormatter =
 
 private const val DaysPerRow = 7
 private val DayCellSize = 36.dp
-private val MonthChevronRotationDegrees = 180f
+private const val MonthChevronRotationDegrees = 180f
 
 @Composable
 fun ItemHistoryCalendar(
@@ -242,7 +242,8 @@ private fun MonthHeader(
 private fun WeekdayHeader(modifier: Modifier = Modifier) {
     Row(modifier = modifier.fillMaxWidth()) {
         repeat(DaysPerRow) { index ->
-            val label = java.time.DayOfWeek.of(if (index == 0) 7 else index)
+            val dayOfWeek = if (index == 0) java.time.DayOfWeek.SUNDAY.value else index
+            val label = java.time.DayOfWeek.of(dayOfWeek)
                 .getDisplayName(java.time.format.TextStyle.NARROW, Locale.getDefault())
             Text(
                 text = label,

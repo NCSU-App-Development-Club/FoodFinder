@@ -100,6 +100,7 @@ fun NavigationGraph(
     }
 }
 
+@Suppress("LongMethod")
 private fun NavGraphBuilder.foodFinderDestinations(navController: NavController) {
     composable<Route.Home> {
         ScreenScaffold(
