@@ -207,7 +207,24 @@ object Database {
         }
     }
 
-    fun upsertMenus(menus: List<Menu>) {
+    fun replaceMenus(menus: List<Menu>) {
+        for ((locationId, locationMenus) in menus.groupBy { it.locationId }) {
+            val scrapedIds = locationMenus.map { it.id }
+            val scrapedDates = locationMenus.map { it.date }.distinct()
+            val staleIds = Menus
+                .select(Menus.id)
+                .where {
+                    (Menus.locationId eq locationId) and
+                        (Menus.date inList scrapedDates) and
+                        (Menus.id notInList scrapedIds)
+                }
+                .map { it[Menus.id] }
+            if (staleIds.isNotEmpty()) {
+                // Remove connections that no longer exist after the most recent scrape
+                SectionsToItems.deleteWhere { SectionsToItems.menuId inList staleIds }
+                Menus.deleteWhere { Menus.id inList staleIds }
+            }
+        }
         Menus.batchUpsert(menus) {
             this[Menus.id] = it.id
             this[Menus.date] = it.date

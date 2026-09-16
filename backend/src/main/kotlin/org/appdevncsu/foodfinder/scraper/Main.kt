@@ -85,7 +85,7 @@ private fun scrapeMenus() {
             menuItems.distinctBy { it.second.id }.count(),
         )
 
-        transaction { Database.upsertMenus(menus) }
+        transaction { Database.replaceMenus(menus) }
         transaction { Database.upsertMenuSections(menuSections) }
         transaction { Database.upsertMenuItems(menuItems) }
     } finally {
