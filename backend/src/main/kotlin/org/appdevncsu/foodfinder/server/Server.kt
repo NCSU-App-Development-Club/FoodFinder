@@ -114,6 +114,40 @@ fun Application.configureRouting() {
                         ?: ContentType.Application.OctetStream
                 )
             }
+            get("/locations/{locationId}/item-history") {
+                val locationId = call.parameters["locationId"]!!.toInt()
+                val name = call.request.queryParameters["name"]
+                if (name.isNullOrBlank() || name.length > MAX_ITEM_NAME_LENGTH) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("error" to "Provide an item 'name' of at most $MAX_ITEM_NAME_LENGTH characters")
+                    )
+                    return@get
+                }
+                val dateParam = call.request.queryParameters["date"]
+                val endDate = if (dateParam == null) {
+                    // Without a menu date, end the window at the latest menu we know about for
+                    // this location so that newly-seen items still count once.
+                    withContext(Dispatchers.IO) { Database.getLatestMenuDate(locationId) }
+                        ?: LocalDate.now(NCSU_ZONE)
+                } else {
+                    runCatching { LocalDate.parse(dateParam) }.getOrNull()
+                }
+                if (endDate == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid 'date'; expected yyyy-MM-dd"))
+                    return@get
+                }
+                // History only changes when new menus are scraped, so clients may cache it for a day.
+                call.response.header(HttpHeaders.CacheControl, "public, max-age=86400")
+                val history = withContext(Dispatchers.IO) {
+                    Database.getMenuItemHistory(locationId, name, endDate)
+                }
+                if (history == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid item name"))
+                    return@get
+                }
+                call.respondWithEtag(mapOf("history" to history))
+            }
             route("/locations/{locationId}/menus") {
                 get {
                     call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
@@ -190,3 +224,4 @@ private const val DEFAULT_HOURS_DAYS = 3
 private const val MAX_HOURS_DAYS = 7
 private const val MAX_FAVORITE_ITEMS = 200
 private const val MAX_FAVORITE_DAYS = 14
+private const val MAX_ITEM_NAME_LENGTH = 128

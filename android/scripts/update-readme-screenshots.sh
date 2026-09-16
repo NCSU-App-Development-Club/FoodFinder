@@ -42,3 +42,7 @@ frame_pixel9 "$SRC/${PREFIX}_menuListLight.png" screenshots/menu-list-light.png
 frame_pixel9 "$SRC/${PREFIX}_menuListDark.png" screenshots/menu-list-dark.png
 frame_pixel9 "$SRC/${PREFIX}_menuLight.png" screenshots/menu-light.png
 frame_pixel9 "$SRC/${PREFIX}_menuDark.png" screenshots/menu-dark.png
+frame_pixel9 "$SRC/${PREFIX}_itemHistoryLight.png" screenshots/item-history-light.png
+frame_pixel9 "$SRC/${PREFIX}_itemHistoryDark.png" screenshots/item-history-dark.png
+frame_pixel9 "$SRC/${PREFIX}_favoritesLight.png" screenshots/favorites-light.png
+frame_pixel9 "$SRC/${PREFIX}_favoritesDark.png" screenshots/favorites-dark.png

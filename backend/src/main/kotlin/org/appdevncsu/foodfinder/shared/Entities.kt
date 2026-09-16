@@ -131,3 +131,15 @@ data class FavoriteMatch(
 data class FavoritesResponse(
     val matches: List<FavoriteMatch>,
 )
+
+/**
+ * How often an item has appeared at a location in the past.
+ */
+@Serializable
+data class MenuItemHistory(
+    val locationId: Int,
+    val name: String,
+    val firstSeen: String?, // ISO date of the earliest sighting; null if never seen
+    val frequencyPerWeek: Double, // average distinct days on the menu per week
+    val dates: List<String>, // ISO dates seen in the last [HISTORY_WINDOW_DAYS] days, ascending
+)

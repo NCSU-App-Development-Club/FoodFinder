@@ -21,6 +21,7 @@ import java.io.File
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.round
 
 object Database {
 
@@ -31,6 +32,9 @@ object Database {
     private const val TURNOVER_WINDOW_DAYS = 14L
     private const val TURNOVER_MIN_MENUS = 3L
     private const val TURNOVER_CACHE_TTL_NANOS = 10L * 60 * 1_000_000_000 // 10 minutes
+
+    private const val HISTORY_WINDOW_DAYS = 90L
+    private const val DAYS_PER_WEEK = 7.0
 
     private data class TurnoverCacheEntry(
         val expiresAtNanos: Long,
@@ -330,6 +334,16 @@ object Database {
         }
     }
 
+    /** The latest menu date stored for [locationId], if the location has any menus. */
+    fun getLatestMenuDate(locationId: Int): LocalDate? {
+        return transaction {
+            Menus.select(Menus.date.max())
+                .where { Menus.locationId eq locationId }
+                .firstOrNull()
+                ?.get(Menus.date.max())
+        }
+    }
+
     /**
      * Returns the menus in the next [days] days (starting at [start]) that contain any of
      * [names], grouped by menu. Matching is case- and whitespace-insensitive because menu
@@ -458,6 +472,54 @@ object Database {
                 it[normalizedName].trim().lowercase() to earliest
             }
             .toMap()
+    }
+
+    /**
+     * Returns the dates in the [HISTORY_WINDOW_DAYS]-day window ending on [endDate] that an
+     * item (matched by trimmed, lowercased name) was on the menu at [locationId], plus its
+     * all-time first appearance and average frequency in days per week.
+     */
+    fun getMenuItemHistory(locationId: Int, rawName: String, endDate: LocalDate): MenuItemHistory? {
+        val normalized = rawName.trim().lowercase()
+        if (normalized.isEmpty()) return null
+        val windowStart = endDate.minusDays(HISTORY_WINDOW_DAYS - 1)
+        return transaction {
+            val firstSeen = MenuItems
+                .innerJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId }
+                .innerJoin(Menus) { SectionsToItems.menuId eq Menus.id }
+                .select(Menus.date.min())
+                .where {
+                    (Menus.locationId eq locationId) and
+                        (MenuItems.name.lowerCase() eq normalized)
+                }
+                .firstOrNull()
+                ?.get(Menus.date.min())
+
+            val dates = MenuItems
+                .innerJoin(SectionsToItems) { MenuItems.id eq SectionsToItems.itemId }
+                .innerJoin(Menus) { SectionsToItems.menuId eq Menus.id }
+                .select(Menus.date)
+                .where {
+                    (Menus.locationId eq locationId) and
+                        (MenuItems.name.lowerCase() eq normalized) and
+                        (Menus.date greaterEq windowStart) and (Menus.date lessEq endDate)
+                }
+                .map { it[Menus.date] }
+                .distinct()
+                .sorted()
+
+            MenuItemHistory(
+                locationId = locationId,
+                name = rawName.trim(),
+                firstSeen = firstSeen?.toString(),
+                frequencyPerWeek = if (dates.isEmpty()) {
+                    0.0
+                } else {
+                    round(dates.size * DAYS_PER_WEEK / HISTORY_WINDOW_DAYS * 10) / 10
+                },
+                dates = dates.map { it.toString() },
+            )
+        }
     }
 
     private fun getSectionTurnover(locationId: Int): Map<Int, Double> {

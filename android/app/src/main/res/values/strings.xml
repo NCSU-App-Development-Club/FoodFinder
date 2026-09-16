@@ -40,6 +40,22 @@
     <!-- Menu items -->
     <string name="menu_item_new">New</string>
 
+    <!-- Item history -->
+    <string name="item_history_first_seen">First seen</string>
+    <string name="item_history_never">Never</string>
+    <string name="item_history_frequency">Frequency</string>
+    <string name="item_history_frequency_value">%1$s / week</string>
+    <string name="item_history_frequency_weekly">about once a week</string>
+    <string name="item_history_frequency_every_weeks">one in every %1$d weeks</string>
+    <string name="item_history_frequency_unknown">—</string>
+    <plurals name="item_history_seen_summary">
+        <item quantity="one">Seen once in the last 90 days</item>
+        <item quantity="other">Seen on %1$d days in the last 90 days</item>
+    </plurals>
+    <string name="item_history_seen_none">Not seen in the last 90 days</string>
+    <string name="item_history_previous_month">Previous month</string>
+    <string name="item_history_next_month">Next month</string>
+
     <!-- Empty states -->
     <string name="empty_menus">No menus available for this location</string>
 

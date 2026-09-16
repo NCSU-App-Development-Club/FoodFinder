@@ -19,6 +19,8 @@ import kotlinx.serialization.json.Json
 import org.appdevncsu.foodfinder.data.APIClient
 import org.appdevncsu.foodfinder.data.HoursList
 import org.appdevncsu.foodfinder.data.HoursRange
+import org.appdevncsu.foodfinder.data.ItemHistory
+import org.appdevncsu.foodfinder.data.ItemHistoryResponse
 import org.appdevncsu.foodfinder.data.Location
 import org.appdevncsu.foodfinder.data.LocationList
 import org.appdevncsu.foodfinder.data.LocationStatus
@@ -47,6 +49,7 @@ private const val DiningHallType = "dining-halls"
 private const val PrefetchDays = 3
 private const val PrefetchConcurrency = 4
 private const val MenuRetentionMillis = 7L * 24 * 60 * 60 * 1000
+private const val ItemHistoryCacheTtlMillis = 24L * 60 * 60 * 1000
 private const val TAG = "ContentRepository"
 
 /**
@@ -79,6 +82,21 @@ class ContentRepository @Inject constructor(
 
     fun observeSections(locationId: Int, menuId: Int): Flow<SectionList?> =
         payloadDao.observe(PayloadKeys.sections(locationId, menuId)).map { decode<SectionList>(it) }
+
+    fun observeItemHistory(locationId: Int, name: String, date: String): Flow<ItemHistory?> =
+        payloadDao.observe(PayloadKeys.itemHistory(locationId, name, date))
+            .map { decode<ItemHistoryResponse>(it)?.history }
+
+    /**
+     * Fetches an item's history unless a copy cached within [ItemHistoryCacheTtlMillis]
+     * is already available. [date] is the menu date the window ends on.
+     */
+    suspend fun refreshItemHistory(locationId: Int, name: String, date: String) {
+        val key = PayloadKeys.itemHistory(locationId, name, date)
+        val cached = payloadDao.get(key)
+        if (cached != null && System.currentTimeMillis() - cached.fetchedAt < ItemHistoryCacheTtlMillis) return
+        store(key, apiClient.itemHistory(locationId, name, date))
+    }
 
     /**
      * Fetches locations and the next [PrefetchDays] days of hours, then prefetches menus.
@@ -176,6 +194,7 @@ class ContentRepository @Inject constructor(
         payloadDao.deleteStale(cutoff, PayloadKeys.MenusPrefix)
         payloadDao.deleteStale(cutoff, PayloadKeys.SectionsPrefix)
         payloadDao.deleteStale(cutoff, PayloadKeys.FavoriteMatchesPrefix)
+        payloadDao.deleteStale(cutoff, PayloadKeys.ItemHistoryPrefix)
     }
 
     private fun observeHoursByDate(): Flow<Map<String, Map<String, List<HoursRange>>>> =

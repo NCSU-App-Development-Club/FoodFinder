@@ -51,6 +51,7 @@ fun MenuSectionList(
     menuId: Int,
     locationId: Int,
     modifier: Modifier = Modifier,
+    onItemClick: (Item) -> Unit = {},
     viewModel: MenuViewModel = hiltViewModel()
 ) {
     LaunchedEffect(menuId, locationId) {
@@ -62,6 +63,7 @@ fun MenuSectionList(
         state = state,
         onRetry = { viewModel.retry(menuId, locationId) },
         onToggleFavorite = { viewModel.toggleFavorite(it) },
+        onItemClick = onItemClick,
         modifier = modifier,
     )
 }
@@ -72,6 +74,7 @@ internal fun MenuSectionListContent(
     modifier: Modifier = Modifier,
     onRetry: () -> Unit = {},
     onToggleFavorite: (String) -> Unit = {},
+    onItemClick: (Item) -> Unit = {},
 ) {
     val sections = state.sections
     LazyColumn(
@@ -104,6 +107,7 @@ internal fun MenuSectionListContent(
                     section = section,
                     favoriteNames = state.favoriteNames,
                     onToggleFavorite = onToggleFavorite,
+                    onItemClick = onItemClick,
                 )
             }
         }
@@ -115,6 +119,7 @@ private fun ExpandableMenuSection(
     section: Section,
     favoriteNames: Set<String>,
     onToggleFavorite: (String) -> Unit,
+    onItemClick: (Item) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by rememberSaveable { mutableStateOf(true) }
@@ -152,6 +157,7 @@ private fun ExpandableMenuSection(
                     menuItem = menuItem,
                     isFavorite = menuItem.normalizedName in favoriteNames,
                     onToggleFavorite = { onToggleFavorite(menuItem.name) },
+                    onClick = { onItemClick(menuItem) },
                 )
             }
         }

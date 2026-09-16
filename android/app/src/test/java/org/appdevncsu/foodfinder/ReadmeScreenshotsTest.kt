@@ -34,6 +34,8 @@ import coil3.annotation.ExperimentalCoilApi
 import coil3.asImage
 import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImagePreviewHandler
+import org.appdevncsu.foodfinder.composables.FavoritesListContent
+import org.appdevncsu.foodfinder.composables.ItemHistoryCalendarContent
 import org.appdevncsu.foodfinder.composables.LocationListContent
 import org.appdevncsu.foodfinder.composables.MenuListContent
 import org.appdevncsu.foodfinder.composables.MenuSectionListContent
@@ -47,11 +49,14 @@ import org.appdevncsu.foodfinder.data.MenuList
 import org.appdevncsu.foodfinder.data.Section
 import org.appdevncsu.foodfinder.data.SectionList
 import org.appdevncsu.foodfinder.ui.theme.FoodFinderTheme
+import org.appdevncsu.foodfinder.viewmodel.FavoritesViewModel
+import org.appdevncsu.foodfinder.viewmodel.ItemHistoryViewModel
 import org.appdevncsu.foodfinder.viewmodel.LocationListViewModel
 import org.appdevncsu.foodfinder.viewmodel.MenuListViewModel
 import org.appdevncsu.foodfinder.viewmodel.MenuViewModel
 import org.junit.Rule
 import org.junit.Test
+import java.time.LocalDate
 
 /**
  * This class renders the screenshots shown in the README.
@@ -153,6 +158,54 @@ class ReadmeScreenshotsTest {
                         sections = sampleSections,
                     ),
                 )
+            }
+        }
+    }
+
+    @Test
+    fun itemHistoryLight() {
+        paparazzi.snapshot {
+            ReadmeFrame(title = "Grilled Chicken Sandwich", onBack = {}, darkTheme = false) {
+                ItemHistoryCalendarContent(
+                    state = ItemHistoryViewModel.UiState(
+                        loading = false,
+                        history = sampleItemHistory,
+                    ),
+                    today = sampleToday,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun itemHistoryDark() {
+        paparazzi.snapshot {
+            ReadmeFrame(title = "Grilled Chicken Sandwich", onBack = {}, darkTheme = true) {
+                ItemHistoryCalendarContent(
+                    state = ItemHistoryViewModel.UiState(
+                        loading = false,
+                        history = sampleItemHistory,
+                    ),
+                    today = sampleToday,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun favoritesLight() {
+        paparazzi.snapshot {
+            ReadmeFrame(title = "Your favorites today", onBack = {}, darkTheme = false) {
+                FavoritesListContent(groups = sampleFavorites)
+            }
+        }
+    }
+
+    @Test
+    fun favoritesDark() {
+        paparazzi.snapshot {
+            ReadmeFrame(title = "Your favorites today", onBack = {}, darkTheme = true) {
+                FavoritesListContent(groups = sampleFavorites)
             }
         }
     }
@@ -324,6 +377,58 @@ private val sampleSections = SectionList(
                     sectionId = 2,
                     flags = listOf("Vegetarian"),
                 ),
+            ),
+        ),
+    ),
+)
+
+private val sampleToday = LocalDate.parse("2025-08-25")
+
+private val sampleItemHistory = ItemHistoryViewModel.History(
+    firstSeen = LocalDate.parse("2025-06-20"),
+    frequencyPerWeek = 0.5,
+    seenDates = setOf(
+        "2025-08-04",
+        "2025-08-07",
+        "2025-08-11",
+        "2025-08-14",
+        "2025-08-18",
+        "2025-08-21",
+        "2025-08-25",
+    ).map(LocalDate::parse).toSet(),
+)
+
+private val sampleFavorites = listOf(
+    FavoritesViewModel.LocationGroup(
+        locationId = 1,
+        locationName = "Fountain Dining Hall",
+        menus = listOf(
+            FavoritesViewModel.MenuGroup(
+                locationId = 1,
+                menuId = 1,
+                menuName = "Breakfast",
+                date = "2025-08-25",
+                items = listOf("Vanilla Granola", "Fresh Cantaloupe"),
+            ),
+            FavoritesViewModel.MenuGroup(
+                locationId = 1,
+                menuId = 2,
+                menuName = "Lunch",
+                date = "2025-08-25",
+                items = listOf("Cheese Pizza"),
+            ),
+        ),
+    ),
+    FavoritesViewModel.LocationGroup(
+        locationId = 2,
+        locationName = "Clark Dining Hall",
+        menus = listOf(
+            FavoritesViewModel.MenuGroup(
+                locationId = 2,
+                menuId = 5,
+                menuName = "Dinner",
+                date = "2025-08-25",
+                items = listOf("Chicken Wings", "Macaroni au Gratin"),
             ),
         ),
     ),

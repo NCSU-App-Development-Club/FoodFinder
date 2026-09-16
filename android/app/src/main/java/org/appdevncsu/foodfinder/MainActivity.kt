@@ -33,6 +33,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.appdevncsu.foodfinder.composables.FavoritesBarButton
 import org.appdevncsu.foodfinder.composables.FavoritesList
+import org.appdevncsu.foodfinder.composables.ItemHistoryCalendar
 import org.appdevncsu.foodfinder.composables.LocationList
 import org.appdevncsu.foodfinder.composables.MenuList
 import org.appdevncsu.foodfinder.composables.MenuSectionList
@@ -132,7 +133,25 @@ private fun NavGraphBuilder.foodFinderDestinations(navController: NavController)
             subtitle = formatMenuDate(route.date),
             onBack = dropUnlessResumed { navController.navigateUp() },
         ) {
-            MenuSectionList(route.menuId, route.locationId)
+            MenuSectionList(
+                menuId = route.menuId,
+                locationId = route.locationId,
+                onItemClick = { item ->
+                    navController.navigate(
+                        Route.ItemHistory(route.locationId, item.name, route.date)
+                    )
+                },
+            )
+        }
+    }
+
+    composable<Route.ItemHistory> { backStackEntry ->
+        val route = backStackEntry.toRoute<Route.ItemHistory>()
+        ScreenScaffold(
+            title = route.itemName,
+            onBack = dropUnlessResumed { navController.navigateUp() },
+        ) {
+            ItemHistoryCalendar(route.locationId, route.itemName, route.date)
         }
     }
 
@@ -212,4 +231,8 @@ sealed class Route {
     @Serializable
     @SerialName("menu")
     data class Menu(val menuId: Int, val menuName: String, val date: String, val locationId: Int) : Route()
+
+    @Serializable
+    @SerialName("itemHistory")
+    data class ItemHistory(val locationId: Int, val itemName: String, val date: String) : Route()
 }

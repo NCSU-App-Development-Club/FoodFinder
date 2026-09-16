@@ -1,6 +1,7 @@
 package org.appdevncsu.foodfinder.composables
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,15 +34,18 @@ fun MenuItem(
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
     modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
 ) {
+    val clickModifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
     val rowModifier = if (isFavorite) {
         modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = FavoriteBackgroundAlpha))
+            .then(clickModifier)
             .padding(horizontal = 12.dp, vertical = 8.dp)
     } else {
-        modifier.fillMaxWidth()
+        modifier.fillMaxWidth().then(clickModifier)
     }
     Row(
         modifier = rowModifier,

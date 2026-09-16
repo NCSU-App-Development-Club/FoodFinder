@@ -113,6 +113,13 @@ interface APIClient {
     @GET("locations/{locId}/menus/{menuId}")
     suspend fun listSection(@Path("locId") locID: Int, @Path("menuId") menuID: Int): SectionList
 
+    @GET("locations/{locId}/item-history")
+    suspend fun itemHistory(
+        @Path("locId") locId: Int,
+        @Query("name") name: String,
+        @Query("date") date: String,
+    ): ItemHistoryResponse
+
     @GET("hours")
     suspend fun listHours(@Query("days") days: Int): HoursList
 
@@ -139,6 +146,20 @@ data class FavoriteMatch(
     val menuName: String,
     val date: String,
     val items: List<String>,
+)
+
+@Serializable
+data class ItemHistoryResponse(
+    val history: ItemHistory,
+)
+
+@Serializable
+data class ItemHistory(
+    val locationId: Int,
+    val name: String,
+    val firstSeen: String? = null,
+    val frequencyPerWeek: Double = 0.0,
+    val dates: List<String> = emptyList(),
 )
 
 @Module
