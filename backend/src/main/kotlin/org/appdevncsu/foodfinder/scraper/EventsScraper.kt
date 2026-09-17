@@ -1,11 +1,20 @@
 package org.appdevncsu.foodfinder.scraper
 
+import biweekly.component.VEvent
+import biweekly.io.TimezoneInfo
+import biweekly.io.text.ICalReader
+import biweekly.property.DateStart
+import biweekly.property.Status
+import biweekly.util.ICalDate
 import org.appdevncsu.foodfinder.shared.CampusEvent
 import org.appdevncsu.foodfinder.shared.NCSU_ZONE
 import org.slf4j.LoggerFactory
-import java.time.*
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+import java.util.Date
+import java.util.TimeZone
 
 private val log = LoggerFactory.getLogger("calendarEvents")
 
@@ -18,11 +27,16 @@ object EventsScraper {
             "ncsu.edu_eogq8vgp8tjmgf30rbskkcf740@group.calendar.google.com/public/basic.ics" +
             "?futureevents=true"
 
-    private const val CANCELLED = "CANCELLED"
+    private const val CANCELLED = Status.CANCELLED
 
-    private val dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd")
-    private val localDateTimeFormat = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss")
-    private val utcDateTimeFormat = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
+    // Occurrences starting up to this far in the past are still stored (covers scrape gaps);
+    // occurrences beyond the horizon are left for a later run.
+    private val LOOKBACK: Duration = Duration.ofDays(1)
+    private val HORIZON: Duration = Duration.ofDays(180)
+    private val DEFAULT_TIMED_DURATION: Duration = Duration.ofHours(1)
+
+    private val ncsuTimeZone: TimeZone = TimeZone.getTimeZone(NCSU_ZONE)
+    private val utcTimeZone: TimeZone = TimeZone.getTimeZone("UTC")
 
     /** Fetches and parses the upcoming events, sorted by start time. */
     fun fetchEvents(): List<CampusEvent> {
@@ -33,122 +47,141 @@ object EventsScraper {
     }
 
     /**
-     * Parses ICS text into events. Cancelled events and VEVENT blocks without a UID or start time are skipped.
+     * Parses ICS text into concrete event occurrences. Recurring series are expanded to
+     * occurrences within the lookback/lookahead window. Cancelled events and VEVENT blocks
+     * without a UID or start time are skipped.
      */
-    fun parse(ics: String): List<CampusEvent> {
-        val events = mutableListOf<CampusEvent>()
-        var current: MutableMap<String, IcsProperty>? = null
-        for (line in unfold(ics)) {
-            when {
-                line == "BEGIN:VEVENT" -> current = mutableMapOf()
-                line == "END:VEVENT" -> {
-                    current?.toEvent()?.let { events.add(it) }
-                    current = null
-                }
+    fun parse(ics: String, now: Instant = Instant.now()): List<CampusEvent> {
+        val calendar = ICalReader(ics).use { it.readNext() } ?: return emptyList()
+        val timezoneInfo = calendar.timezoneInfo
+        val components = calendar.events
 
-                current != null -> parseProperty(line)?.let { current[it.name] = it }
+        // A RECURRENCE-ID marks an override of a single occurrence in a series.
+        val overrides = mutableMapOf<Pair<String, Long>, VEvent>()
+        for (event in components) {
+            val recurrenceId = event.recurrenceId?.value ?: continue
+            val uid = event.uid?.value?.takeIf { it.isNotBlank() } ?: continue
+            overrides[uid to recurrenceId.toStartInstant().toEpochMilli()] = event
+        }
+
+        val events = mutableListOf<CampusEvent>()
+        for (event in components) {
+            if (event.recurrenceId != null) continue // emitted from overrides below
+            events += if (event.recurrenceRule != null) {
+                event.expand(timezoneInfo, now, overrides)
+            } else {
+                listOfNotNull(event.toEvent())
             }
         }
+        overrides.values.forEach { events += listOfNotNull(it.toEvent()) }
+
         return events
             .filter { it.status != CANCELLED }
             .sortedBy { it.start }
     }
 
-    /** Rejoins RFC 5545 folded lines (continuations start with a space or tab). */
-    private fun unfold(ics: String): List<String> {
-        val lines = mutableListOf<String>()
-        for (raw in ics.split("\r\n", "\n", "\r")) {
-            val line = if (lines.isNotEmpty() && raw.isNotEmpty() && (raw[0] == ' ' || raw[0] == '\t')) {
-                lines.removeAt(lines.size - 1) + raw.substring(1)
-            } else {
-                raw
-            }
-            if (line.isNotEmpty()) lines.add(line)
-        }
-        return lines
-    }
+    /** Expands a recurring event into occurrences within the lookback/lookahead window. */
+    private fun VEvent.expand(
+        timezoneInfo: TimezoneInfo,
+        now: Instant,
+        overrides: Map<Pair<String, Long>, VEvent>,
+    ): List<CampusEvent> {
+        val uid = uid?.value?.takeIf { it.isNotBlank() } ?: return emptyList()
+        val title = summary?.value?.takeIf { it.isNotBlank() } ?: return emptyList()
+        val start = dateStart?.value ?: return emptyList()
+        val rule = recurrenceRule ?: return listOfNotNull(toEvent())
+        val allDay = !start.hasTime()
 
-    private fun parseProperty(line: String): IcsProperty? {
-        val colon = line.indexOf(':')
-        if (colon < 0) return null
-        val segments = line.substring(0, colon).split(';')
-        val params = segments.drop(1).mapNotNull { segment ->
-            val equals = segment.indexOf('=')
-            if (equals < 0) null else segment.substring(0, equals).uppercase() to segment.substring(equals + 1)
-                .trim('"')
-        }.toMap()
-        return IcsProperty(
-            name = segments.first().uppercase(),
-            params = params,
-            value = line.substring(colon + 1),
-        )
-    }
-
-    private fun Map<String, IcsProperty>.toEvent(): CampusEvent? {
-        val uid = this["UID"]?.value?.takeIf { it.isNotBlank() } ?: return null
-        val startProperty = this["DTSTART"] ?: return null
-        val start = startProperty.toInstant() ?: return null
-        return CampusEvent(
-            uid = uid,
-            recurrenceId = this["RECURRENCE-ID"]?.value?.let(::unescape)?.takeIf { it.isNotBlank() },
-            title = this["SUMMARY"]?.value?.let(::unescape)?.takeIf { it.isNotBlank() } ?: return null,
-            description = this["DESCRIPTION"]?.value?.let(::unescape)?.takeIf { it.isNotBlank() },
-            location = this["LOCATION"]?.value?.let(::unescape)?.takeIf { it.isNotBlank() },
-            start = start,
-            end = this["DTEND"]?.toInstant(),
-            allDay = startProperty.params["VALUE"] == "DATE",
-            status = this["STATUS"]?.value,
-            recurrenceRule = this["RRULE"]?.value,
-        )
-    }
-
-    private fun IcsProperty.toInstant(): Instant? {
-        val raw = value.trim()
-        return try {
-            when {
-                params["VALUE"] == "DATE" || raw.length == 8 ->
-                    LocalDate.parse(raw, dateFormat).atStartOfDay(NCSU_ZONE).toInstant()
-
-                raw.endsWith("Z") ->
-                    LocalDateTime.parse(raw, utcDateTimeFormat).toInstant(ZoneOffset.UTC)
-
-                else -> {
-                    val zone = params["TZID"]?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: NCSU_ZONE
-                    LocalDateTime.parse(raw, localDateTimeFormat).atZone(zone).toInstant()
-                }
-            }
-        } catch (e: DateTimeParseException) {
-            log.warn("Skipping event with unparseable date '{}'", raw)
+        val originalStart = start.toStartInstant()
+        val originalEnd = dateEnd?.value?.toStartInstant()
+        val timedDuration = if (!allDay && originalEnd != null) Duration.between(originalStart, originalEnd) else null
+        val allDaySpanDays = if (allDay && originalEnd != null) {
+            ChronoUnit.DAYS.between(
+                originalStart.atZone(NCSU_ZONE).toLocalDate(),
+                originalEnd.atZone(NCSU_ZONE).toLocalDate(),
+            )
+        } else {
             null
         }
-    }
 
-    /** Unescapes ICS TEXT values: `\n`, `\,`, `\;`, and `\\`. */
-    private fun unescape(value: String): String {
-        val result = StringBuilder(value.length)
-        var i = 0
-        while (i < value.length) {
-            val c = value[i]
-            if (c == '\\' && i + 1 < value.length) {
-                when (val escaped = value[i + 1]) {
-                    'n', 'N' -> result.append('\n')
-                    ',' -> result.append(',')
-                    ';' -> result.append(';')
-                    '\\' -> result.append('\\')
-                    else -> result.append(escaped)
-                }
-                i += 2
-            } else {
-                result.append(c)
-                i++
-            }
+        val excluded = exceptionDates.flatMap { it.values }.mapTo(mutableSetOf()) { it.toStartInstant().toEpochMilli() }
+        val windowStart = now.minus(LOOKBACK).toEpochMilli()
+        val windowEnd = now.plus(HORIZON).toEpochMilli()
+
+        val events = mutableListOf<CampusEvent>()
+        val iterator = rule.getDateIterator(start, recurrenceTimeZone(dateStart, timezoneInfo))
+        iterator.advanceTo(Date(windowStart))
+        while (iterator.hasNext()) {
+            val occurrenceMillis = iterator.next().time
+            if (occurrenceMillis > windowEnd) break
+            if (uid to occurrenceMillis in overrides) continue
+            if (occurrenceMillis in excluded) continue
+            val occurrenceStart = Instant.ofEpochMilli(occurrenceMillis)
+            events += CampusEvent(
+                uid = uid,
+                title = title,
+                description = description?.value?.takeIf { it.isNotBlank() },
+                location = location?.value?.takeIf { it.isNotBlank() },
+                start = occurrenceStart,
+                end = occurrenceEnd(occurrenceStart, allDay, timedDuration, allDaySpanDays),
+                allDay = allDay,
+                status = status?.value,
+            )
         }
-        return result.toString()
+        return events
     }
 
-    private data class IcsProperty(
-        val name: String,
-        val params: Map<String, String>,
-        val value: String,
-    )
+    private fun occurrenceEnd(
+        start: Instant,
+        allDay: Boolean,
+        timedDuration: Duration?,
+        allDaySpanDays: Long?,
+    ): Instant {
+        return if (allDay) {
+            start.atZone(NCSU_ZONE).toLocalDate()
+                .plusDays(allDaySpanDays ?: 1L)
+                .atStartOfDay(NCSU_ZONE)
+                .toInstant()
+        } else {
+            start.plus(timedDuration ?: DEFAULT_TIMED_DURATION)
+        }
+    }
+
+    private fun VEvent.toEvent(): CampusEvent? {
+        val uid = uid?.value?.takeIf { it.isNotBlank() } ?: return null
+        val title = summary?.value?.takeIf { it.isNotBlank() } ?: return null
+        val start = dateStart?.value ?: return null
+        return CampusEvent(
+            uid = uid,
+            title = title,
+            description = description?.value?.takeIf { it.isNotBlank() },
+            location = location?.value?.takeIf { it.isNotBlank() },
+            start = start.toStartInstant(),
+            end = dateEnd?.value?.toStartInstant(),
+            allDay = !start.hasTime(),
+            status = status?.value,
+        )
+    }
+
+    /**
+     * The zone an event recurs in: its assigned `TZID`, UTC for `...Z` values, or Eastern for
+     * all-day and floating values (this calendar is Eastern).
+     */
+    private fun recurrenceTimeZone(property: DateStart?, timezoneInfo: TimezoneInfo): TimeZone {
+        if (property == null) return ncsuTimeZone
+        val value = property.value
+        if (value != null && !value.hasTime()) return ncsuTimeZone
+        if (timezoneInfo.isFloating(property)) return ncsuTimeZone
+        return timezoneInfo.getTimezone(property)?.timeZone ?: utcTimeZone
+    }
+
+    /** Resolves an iCalendar date to an instant, anchoring all-day values to Eastern midnight. */
+    private fun ICalDate.toStartInstant(): Instant =
+        if (hasTime()) {
+            Instant.ofEpochMilli(time)
+        } else {
+            LocalDate.of(rawComponents.year, rawComponents.month, rawComponents.date)
+                .atStartOfDay(NCSU_ZONE)
+                .toInstant()
+        }
 }

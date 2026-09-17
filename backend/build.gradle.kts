@@ -31,6 +31,10 @@ dependencies {
     implementation("org.quartz-scheduler:quartz:2.5.0")
 
     // Shared
+    implementation("net.sf.biweekly:biweekly:0.6.8") { // iCalendar ICS feed parsing
+        // We don't need any code from biweekly that touches the Jackson dependency
+        exclude(group = "com.fasterxml.jackson.core", module = "jackson-core")
+    }
     implementation("org.xerial:sqlite-jdbc:3.53.2.1")
     implementation("org.jetbrains.exposed:exposed-core:1.4.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:1.4.0")

@@ -64,12 +64,11 @@ data class DiningLocationHours(
 )
 
 /**
- * One event from the NC State Dining Google Calendar. Recurring series are stored once (with [recurrenceRule])
- * unless the calendar overrides an individual occurrence, in which case [recurrenceId] identifies it.
+ * One concrete event occurrence from the NC State Dining Google Calendar. Recurring series are
+ * expanded into one [CampusEvent] per occurrence, so [start] is unique within a series.
  */
 data class CampusEvent(
-    val uid: String, // stable iCalendar UID from the feed
-    val recurrenceId: String?, // set for an overridden instance of a recurring series
+    val uid: String, // iCalendar UID of the series this occurrence belongs to
     val title: String,
     val description: String?,
     val location: String?,
@@ -77,10 +76,9 @@ data class CampusEvent(
     val end: Instant?, // exclusive for all-day events, per iCalendar
     val allDay: Boolean,
     val status: String?, // "CONFIRMED" | "TENTATIVE" | "CANCELLED"
-    val recurrenceRule: String?, // raw RRULE, e.g. "FREQ=WEEKLY;COUNT=4;BYDAY=TU"
 ) {
-    /** Unique identity within the feed; overridden instances share a UID but differ by [recurrenceId]. */
-    val identity: String get() = if (recurrenceId == null) uid else "$uid#$recurrenceId"
+    /** Unique identity of this occurrence: its series UID plus its start time. */
+    val identity: String get() = "$uid#${start.toEpochMilli()}"
 }
 
 /** API response for /api/locations */
