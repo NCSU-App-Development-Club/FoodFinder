@@ -31,6 +31,7 @@ object Database {
     private val initialized = AtomicBoolean(false)
 
     private const val MAX_VARCHAR_LENGTH = 128
+    private const val DINING_HALL_TYPE = "dining-halls"
 
     private const val TURNOVER_WINDOW_DAYS = 14L
     private const val TURNOVER_MIN_MENUS = 3L
@@ -347,7 +348,7 @@ object Database {
                 .map {
                     LocationSummary(
                         id = it[MenuLocations.id],
-                        name = it[MenuLocations.name],
+                        name = displayName(it[DiningLocations.name], it[MenuLocations.name], it[DiningLocations.type]),
                         slug = it[DiningLocations.slug],
                         type = it[DiningLocations.type],
                         imageUrl = "/api/locations/${it[DiningLocations.slug]}/image"
@@ -372,7 +373,8 @@ object Database {
                 .leftJoin(MenuLocations, { DiningLocations.unitId }, { MenuLocations.id })
                 .selectAll().associate {
                     it[DiningLocations.slug] to
-                            ((it[MenuLocations.name] ?: it[DiningLocations.name]) to it[DiningLocations.type])
+                            (displayName(it[DiningLocations.name], it[MenuLocations.name], it[DiningLocations.type])
+                                    to it[DiningLocations.type])
                 }
 
             val hours = LocationHours
@@ -414,6 +416,16 @@ object Database {
                 )
             }
         }
+    }
+
+    /**
+     * Prefers the dining-site name, which tracks renames (e.g. "Port City Java – Koch Hall"),
+     * falling back to the NetNutrition name. Dining halls have abbreviated site names
+     * (e.g. "Fountain"), so "Dining Hall" is appended to keep them recognizable.
+     */
+    private fun displayName(siteName: String?, netNutritionName: String?, type: String?): String {
+        val base = siteName?.takeIf { it.isNotBlank() } ?: netNutritionName.orEmpty()
+        return if (type == DINING_HALL_TYPE && !base.endsWith("Dining Hall")) "$base Dining Hall" else base
     }
 
     private fun CampusEvent.toSummary(): EventSummary = EventSummary(
