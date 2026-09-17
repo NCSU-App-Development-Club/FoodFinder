@@ -2,6 +2,7 @@ package org.appdevncsu.foodfinder.shared
 
 import kotlinx.serialization.Serializable
 import org.appdevncsu.foodfinder.server.LocalDateSerializer
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -61,6 +62,26 @@ data class DiningLocationHours(
     val closeMinute: Int?, // may exceed 1440 for past-midnight closes (e.g. 12:00am -> 1440)
     val rawText: String, // verbatim text from the site, e.g. "Closed all day - Labor Day"
 )
+
+/**
+ * One event from the NC State Dining Google Calendar. Recurring series are stored once (with [recurrenceRule])
+ * unless the calendar overrides an individual occurrence, in which case [recurrenceId] identifies it.
+ */
+data class CampusEvent(
+    val uid: String, // stable iCalendar UID from the feed
+    val recurrenceId: String?, // set for an overridden instance of a recurring series
+    val title: String,
+    val description: String?,
+    val location: String?,
+    val start: Instant,
+    val end: Instant?, // exclusive for all-day events, per iCalendar
+    val allDay: Boolean,
+    val status: String?, // "CONFIRMED" | "TENTATIVE" | "CANCELLED"
+    val recurrenceRule: String?, // raw RRULE, e.g. "FREQ=WEEKLY;COUNT=4;BYDAY=TU"
+) {
+    /** Unique identity within the feed; overridden instances share a UID but differ by [recurrenceId]. */
+    val identity: String get() = if (recurrenceId == null) uid else "$uid#$recurrenceId"
+}
 
 /** API response for /api/locations */
 @Serializable

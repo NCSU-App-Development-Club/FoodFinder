@@ -15,7 +15,7 @@ private val log = LoggerFactory.getLogger("scraper")
 
 private val scrapeLock = ReentrantLock()
 
-enum class ScrapeTarget { MENUS, HOURS, ALL }
+enum class ScrapeTarget { MENUS, HOURS, EVENTS, ALL }
 
 fun main() {
     runScraper()
@@ -28,13 +28,16 @@ fun runScraper(target: ScrapeTarget = ScrapeTarget.ALL) {
         when (target) {
             ScrapeTarget.MENUS -> scrapeMenus()
             ScrapeTarget.HOURS -> scrapeHours()
+            ScrapeTarget.EVENTS -> scrapeEvents()
             ScrapeTarget.ALL -> {
                 val pool = Executors.newVirtualThreadPerTaskExecutor()
                 try {
                     val menusTask = pool.submit { scrapeMenus() }
                     val hoursTask = pool.submit { scrapeHours() }
+                    val eventsTask = pool.submit { scrapeEvents() }
                     menusTask.get()
                     hoursTask.get()
+                    eventsTask.get()
                 } finally {
                     pool.shutdown()
                 }
@@ -101,4 +104,11 @@ private fun scrapeHours() {
         Database.upsertDiningLocations(result.locations)
         Database.replaceHours(result.hours)
     }
+}
+
+/** Scrapes the NC State Dining Google Calendar and stores upcoming events. */
+private fun scrapeEvents() {
+    Database.init()
+    val events = EventsScraper.fetchEvents()
+    transaction { Database.syncEvents(events) }
 }

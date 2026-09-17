@@ -27,7 +27,7 @@ fun triggerScrape(target: ScrapeTarget) {
 /**
  * Triggers manual scrapes via Unix signals:
  *
- *   SIGHUP  all (menus + hours)
+ *   SIGHUP  all (menus + hours + events)
  *   SIGUSR1 menus
  *   SIGUSR2 hours
  *

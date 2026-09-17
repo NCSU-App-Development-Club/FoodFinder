@@ -33,6 +33,18 @@ object HttpClient {
     fun getNetNutritionHTML(url: String): Document = getHTMLContent(nnBaseURL + url, nnLimiter)
     fun getDiningHTML(url: String): Document = getHTMLContent(diningBaseURL + url, diningLimiter)
 
+    /**
+     * Fetches an iCalendar (ICS) feed and returns its raw body.
+     */
+    fun getCalendarICS(url: String): String {
+        log.info("Fetching {}", url)
+        val response = client.newCall(Request.Builder().url(url).build()).execute()
+        if (response.code != 200) {
+            error("Failed to fetch $url: $response")
+        }
+        return response.body.string()
+    }
+
     private fun getHTMLContent(url: String, semaphore: Semaphore): Document {
         val response: Response
         try {

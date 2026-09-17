@@ -139,6 +139,27 @@ object Database {
         }
     }
 
+    // Events from the NC State Dining Google Calendar.
+    private object Events : Table("events") {
+        val identity = varchar("identity", 256) // uid, or uid#recurrenceId for overridden instances
+        val uid = varchar("uid", 256)
+        val recurrenceId = varchar("recurrenceId", 128).nullable()
+        val title = varchar("title", 256)
+        val description = text("description").nullable()
+        val location = varchar("location", 256).nullable()
+        val startMillis = long("startMillis") // epoch millis (UTC)
+        val endMillis = long("endMillis").nullable()
+        val allDay = bool("allDay")
+        val status = varchar("status", 16).nullable()
+        val recurrenceRule = varchar("recurrenceRule", 256).nullable()
+
+        override val primaryKey = PrimaryKey(identity)
+
+        init {
+            index("events_start", false, startMillis)
+        }
+    }
+
     fun init() {
         if (!initialized.compareAndSet(false, true)) return
         val dbPath = File(dataDir(), "data.db").path
@@ -159,7 +180,8 @@ object Database {
                 SectionsToItems,
                 MenuItems,
                 DiningLocations,
-                LocationHours
+                LocationHours,
+                Events
             )
         }
     }
@@ -205,6 +227,31 @@ object Database {
             this[LocationHours.openMinute] = it.openMinute
             this[LocationHours.closeMinute] = it.closeMinute
             this[LocationHours.rawText] = it.rawText
+        }
+    }
+
+    /**
+     * Replace all existing upcoming events in the database with [events]
+     * while leaving past events alone for archival.
+     */
+    fun syncEvents(events: List<CampusEvent>, nowMillis: Long = System.currentTimeMillis()) {
+        Events.deleteWhere {
+            (Events.endMillis greaterEq nowMillis) or
+                (Events.endMillis.isNull() and (Events.startMillis greaterEq nowMillis))
+        }
+        if (events.isEmpty()) return
+        Events.batchUpsert(events) {
+            this[Events.identity] = it.identity
+            this[Events.uid] = it.uid
+            this[Events.recurrenceId] = it.recurrenceId
+            this[Events.title] = it.title
+            this[Events.description] = it.description
+            this[Events.location] = it.location
+            this[Events.startMillis] = it.start.toEpochMilli()
+            this[Events.endMillis] = it.end?.toEpochMilli()
+            this[Events.allDay] = it.allDay
+            this[Events.status] = it.status
+            this[Events.recurrenceRule] = it.recurrenceRule
         }
     }
 
