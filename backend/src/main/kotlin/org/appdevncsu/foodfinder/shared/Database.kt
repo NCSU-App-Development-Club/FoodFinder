@@ -18,6 +18,7 @@ import org.jetbrains.exposed.v1.json.json
 import org.sqlite.SQLiteConfig
 import org.sqlite.SQLiteDataSource
 import java.io.File
+import java.time.Instant
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentHashMap
@@ -251,6 +252,35 @@ object Database {
         }
     }
 
+    /**
+     * Returns the next [limit] events that have not yet ended, soonest first. Ended events are
+     * archived and deliberately excluded.
+     */
+    fun getUpcomingEvents(limit: Int, nowMillis: Long = System.currentTimeMillis()): List<EventSummary> {
+        return transaction {
+            Events
+                .selectAll()
+                .where {
+                    (Events.endMillis greaterEq nowMillis) or
+                        (Events.endMillis.isNull() and (Events.startMillis greaterEq nowMillis))
+                }
+                .orderBy(Events.startMillis to SortOrder.ASC)
+                .limit(limit)
+                .map {
+                    CampusEvent(
+                        uid = it[Events.uid],
+                        title = it[Events.title],
+                        description = it[Events.description],
+                        location = it[Events.location],
+                        start = Instant.ofEpochMilli(it[Events.startMillis]),
+                        end = it[Events.endMillis]?.let { millis -> Instant.ofEpochMilli(millis) },
+                        allDay = it[Events.allDay],
+                        status = it[Events.status],
+                    ).toSummary()
+                }
+        }
+    }
+
     fun replaceMenus(menus: List<Menu>) {
         for ((locationId, locationMenus) in menus.groupBy { it.locationId }) {
             val scrapedIds = locationMenus.map { it.id }
@@ -374,6 +404,16 @@ object Database {
             }
         }
     }
+
+    private fun CampusEvent.toSummary(): EventSummary = EventSummary(
+        id = identity,
+        title = title,
+        description = description,
+        location = location,
+        start = start.toString(),
+        end = end?.toString(),
+        allDay = allDay,
+    )
 
     private fun DiningLocationHours.toHoursRange(): HoursRange {
         return HoursRange(

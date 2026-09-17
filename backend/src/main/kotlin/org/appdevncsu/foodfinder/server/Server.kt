@@ -18,8 +18,6 @@ import org.appdevncsu.foodfinder.scraper.ScrapeTarget
 import org.appdevncsu.foodfinder.shared.Database
 import org.appdevncsu.foodfinder.shared.DiningLocationSchedule
 import org.appdevncsu.foodfinder.shared.FavoriteRequest
-import org.appdevncsu.foodfinder.shared.FavoritesResponse
-import org.appdevncsu.foodfinder.shared.HoursResponse
 import org.appdevncsu.foodfinder.shared.NCSU_ZONE
 import org.slf4j.LoggerFactory
 import java.security.MessageDigest
@@ -178,7 +176,13 @@ fun Application.configureRouting() {
                 // Don't let clients cache an incomplete payload; retry soon instead.
                 val cacheControl = if (mostlyMissingHours(locations)) "no-store" else "public, max-age=3600"
                 call.response.header(HttpHeaders.CacheControl, cacheControl)
-                call.respondWithEtag(HoursResponse(locations = locations))
+                call.respondWithEtag(mapOf("locations" to locations))
+            }
+            get("/events") {
+                // Events only change on the daily scrape, so clients may cache for a day.
+                call.response.header(HttpHeaders.CacheControl, "public, max-age=86400")
+                val events = withContext(Dispatchers.IO) { Database.getUpcomingEvents(MAX_EVENTS) }
+                call.respondWithEtag(mapOf("events" to events))
             }
             route("/favorites/menus") {
                 method(HttpMethod.Query) {
@@ -203,7 +207,7 @@ fun Application.configureRouting() {
                             Database.getMenusContainingItems(request.items, LocalDate.now(NCSU_ZONE), days)
                         }
                         call.response.header(HttpHeaders.CacheControl, "public, max-age=3600")
-                        call.respondWithEtag(FavoritesResponse(matches = matches))
+                        call.respondWithEtag(mapOf("matches" to matches))
                     }
                 }
             }
@@ -222,6 +226,7 @@ private fun mostlyMissingHours(locations: List<DiningLocationSchedule>): Boolean
 
 private const val DEFAULT_HOURS_DAYS = 3
 private const val MAX_HOURS_DAYS = 7
+private const val MAX_EVENTS = 20
 private const val MAX_FAVORITE_ITEMS = 200
 private const val MAX_FAVORITE_DAYS = 14
 private const val MAX_ITEM_NAME_LENGTH = 128

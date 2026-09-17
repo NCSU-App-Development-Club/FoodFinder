@@ -117,10 +117,19 @@ data class DiningLocationSchedule(
     val days: List<DiningDayHours>
 )
 
-/** API response for /api/hours */
+/**
+ * One upcoming event from the NC State Dining calendar.
+ * [start] and [end] are ISO-8601 instants in UTC, e.g. "2026-09-18T15:00:00Z".
+ */
 @Serializable
-data class HoursResponse(
-    val locations: List<DiningLocationSchedule>
+data class EventSummary(
+    val id: String, // stable feed identity; safe to use as a client-side key
+    val title: String,
+    val description: String?,
+    val location: String?,
+    val start: String,
+    val end: String?,
+    val allDay: Boolean,
 )
 
 /** Request body for POST /api/favorites/menus. */
@@ -143,12 +152,6 @@ data class FavoriteMatch(
     @Serializable(with = LocalDateSerializer::class)
     val date: LocalDate,
     val items: List<String>,
-)
-
-/** API response for POST /api/favorites/menus. */
-@Serializable
-data class FavoritesResponse(
-    val matches: List<FavoriteMatch>,
 )
 
 /**
