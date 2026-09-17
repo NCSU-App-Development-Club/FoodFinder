@@ -99,15 +99,16 @@ cd backend
 ./gradlew shadowJar
 java -jar build/libs/*-all.jar <command>
 # or: ./gradlew run --args "<command>"
+# e.g. ./gradlew run --args "scrape events"
 ```
 
 Available commands:
 
-| Command           | Purpose                                                  |
-| ----------------- | -------------------------------------------------------- |
-| `scrape`          | Run the scraper once and exit                            |
-| `serve`           | Run the API server on port 3000                          |
-| `serve-scheduled` | Run the API server and scrape daily at 6am Eastern Time  |
+| Command           | Purpose                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| `scrape [target]` | Run a scrape once and exit. `target` is `all` (default), `menus`, `hours`, or `events` |
+| `serve`           | Run the API server on port 3000                                                       |
+| `serve-scheduled` | Run the API server and scrape daily at 6am Eastern Time                               |
 
 Persistent data (SQLite database + image cache) lives in `$DATA_DIR`, defaulting to the working directory. The Docker image sets `DATA_DIR=/data` and exposes port 3000:
 
