@@ -16,10 +16,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.appdevncsu.foodfinder.R
+import org.appdevncsu.foodfinder.data.Event
 import org.appdevncsu.foodfinder.data.LocationListItem
 import org.appdevncsu.foodfinder.data.LocationStatus
 import org.appdevncsu.foodfinder.data.NotificationPreferences
 import org.appdevncsu.foodfinder.data.currentStatus
+import org.appdevncsu.foodfinder.data.localStartDate
 import org.appdevncsu.foodfinder.data.logApiError
 import org.appdevncsu.foodfinder.data.ncsuZone
 import org.appdevncsu.foodfinder.data.repository.ContentRepository
@@ -53,6 +55,8 @@ class LocationListViewModel @Inject constructor(
         val items: List<LocationListItem> = emptyList(),
         val error: String? = null,
         val showNotificationPrompt: Boolean = false,
+        // Events happening today or tomorrow, soonest first.
+        val events: List<Event> = emptyList(),
     )
 
     private val _error = MutableStateFlow<String?>(null)
@@ -86,8 +90,8 @@ class LocationListViewModel @Inject constructor(
             _initialLoad,
             showNotificationPrompt,
         ) { home, error, _, initialLoad, showPrompt ->
-            val today = LocalDate.now(ncsuZone).toString()
-            val todayHours = home.hoursByDate[today]
+            val today = LocalDate.now(ncsuZone)
+            val todayHours = home.hoursByDate[today.toString()]
             UiState(
                 loading = home.locations == null && error == null,
                 hoursLoading = initialLoad && todayHours == null,
@@ -103,6 +107,10 @@ class LocationListViewModel @Inject constructor(
                     .sortedWith(locationComparator),
                 error = error,
                 showNotificationPrompt = showPrompt,
+                events = home.events.filter { event ->
+                    val date = event.localStartDate()
+                    date == today || date == today.plusDays(1)
+                }.sortedBy { it.start },
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState(loading = true))
 

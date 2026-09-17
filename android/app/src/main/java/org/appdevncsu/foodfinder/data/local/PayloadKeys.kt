@@ -4,6 +4,7 @@ package org.appdevncsu.foodfinder.data.local
 object PayloadKeys {
     const val LOCATIONS = "locations"
     const val HOURS = "hours"
+    const val EVENTS = "events"
 
     const val MenusPrefix = "menus:"
     const val SectionsPrefix = "sections:"

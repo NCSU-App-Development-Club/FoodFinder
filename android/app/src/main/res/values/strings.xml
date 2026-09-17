@@ -31,6 +31,11 @@
     <string name="today">Today</string>
     <string name="tomorrow">Tomorrow</string>
 
+    <!-- Events -->
+    <string name="event_when">%1$s · %2$s</string>
+    <string name="event_all_day">All day</string>
+    <string name="event_time_range">%1$s – %2$s</string>
+
     <!-- Location status badges -->
     <string name="status_open">Open</string>
     <string name="status_closing_soon">Closing</string>

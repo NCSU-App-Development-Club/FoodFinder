@@ -31,6 +31,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +59,7 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImagePreviewHandler
 import org.appdevncsu.foodfinder.R
+import org.appdevncsu.foodfinder.data.Event
 import org.appdevncsu.foodfinder.data.Location
 import org.appdevncsu.foodfinder.data.LocationListItem
 import org.appdevncsu.foodfinder.data.LocationStatus
@@ -94,6 +98,7 @@ fun LocationList(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
     val state by viewModel.uiState.collectAsState()
+    var selectedEvent by remember { mutableStateOf<Event?>(null) }
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { viewModel.onNotificationPromptAnswered() }
@@ -108,8 +113,12 @@ fun LocationList(
             viewModel.onNotificationPromptAnswered()
         },
         onDismissNotificationPrompt = viewModel::onNotificationPromptAnswered,
+        onEventClick = { selectedEvent = it },
         modifier = modifier,
     )
+    selectedEvent?.let { event ->
+        EventDetailSheet(event = event, onDismiss = { selectedEvent = null })
+    }
 }
 
 @Composable
@@ -120,6 +129,7 @@ internal fun LocationListContent(
     onRetry: () -> Unit = {},
     onEnableNotifications: () -> Unit = {},
     onDismissNotificationPrompt: () -> Unit = {},
+    onEventClick: (Event) -> Unit = {},
 ) {
     if (state.error != null && state.items.isEmpty()) {
         ErrorState(
@@ -137,6 +147,15 @@ internal fun LocationListContent(
             .consumeBottomNavBarInsets(),
         contentPadding = bottomNavBarContentPadding(),
     ) {
+        if (state.events.isNotEmpty()) {
+            item(key = "events") {
+                EventCarousel(
+                    events = state.events,
+                    onEventClick = onEventClick,
+                    modifier = Modifier.padding(vertical = 10.dp),
+                )
+            }
+        }
         if (state.showNotificationPrompt) {
             item(key = "notification-prompt") {
                 NotificationPermissionCard(

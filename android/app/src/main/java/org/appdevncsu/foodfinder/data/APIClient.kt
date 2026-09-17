@@ -123,6 +123,9 @@ interface APIClient {
     @GET("hours")
     suspend fun listHours(@Query("days") days: Int): HoursList
 
+    @GET("events")
+    suspend fun listEvents(): EventList
+
     @HTTP(method = "QUERY", path = "favorites/menus", hasBody = true)
     suspend fun favoriteMenus(@Body body: FavoriteRequest): FavoritesResponse
 }
@@ -146,6 +149,22 @@ data class FavoriteMatch(
     val menuName: String,
     val date: String,
     val items: List<String>,
+)
+
+@Serializable
+data class EventList(
+    val events: List<Event>
+)
+
+@Serializable
+data class Event(
+    val id: String,
+    val title: String,
+    val description: String? = null,
+    val location: String? = null,
+    val start: String, // ISO-8601 UTC instant, e.g. "2026-09-18T15:00:00Z"
+    val end: String? = null,
+    val allDay: Boolean = false,
 )
 
 @Serializable

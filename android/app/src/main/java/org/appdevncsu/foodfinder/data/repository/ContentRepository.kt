@@ -17,6 +17,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.serialization.json.Json
 import org.appdevncsu.foodfinder.data.APIClient
+import org.appdevncsu.foodfinder.data.Event
+import org.appdevncsu.foodfinder.data.EventList
 import org.appdevncsu.foodfinder.data.HoursList
 import org.appdevncsu.foodfinder.data.HoursRange
 import org.appdevncsu.foodfinder.data.ItemHistory
@@ -43,6 +45,8 @@ data class HomeData(
     val locations: List<Location>?,
     // Cache date (yyyy-MM-dd) -> slug -> that day's hours ranges.
     val hoursByDate: Map<String, Map<String, List<HoursRange>>>,
+    // Upcoming dining events, soonest first. Empty until the events payload is cached.
+    val events: List<Event>,
 )
 
 private const val DiningHallType = "dining-halls"
@@ -50,6 +54,7 @@ private const val PrefetchDays = 3
 private const val PrefetchConcurrency = 4
 private const val MenuRetentionMillis = 7L * 24 * 60 * 60 * 1000
 private const val ItemHistoryCacheTtlMillis = 24L * 60 * 60 * 1000
+private const val EventsCacheTtlMillis = 6L * 60 * 60 * 1000
 private const val TAG = "ContentRepository"
 
 /**
@@ -70,12 +75,15 @@ class ContentRepository @Inject constructor(
     private var inFlightHomeRefresh: Deferred<Unit>? = null
 
     fun observeHome(): Flow<HomeData> =
-        combine(observeLocations(), observeHoursByDate()) { locations, hoursByDate ->
-            HomeData(locations, hoursByDate)
+        combine(observeLocations(), observeHoursByDate(), observeEvents()) { locations, hoursByDate, events ->
+            HomeData(locations, hoursByDate, events)
         }
 
     fun observeLocations(): Flow<List<Location>?> =
         payloadDao.observe(PayloadKeys.LOCATIONS).map { decode<LocationList>(it)?.locations }
+
+    fun observeEvents(): Flow<List<Event>> =
+        payloadDao.observe(PayloadKeys.EVENTS).map { decode<EventList>(it)?.events.orEmpty() }
 
     fun observeMenus(locationId: Int): Flow<MenuList?> =
         payloadDao.observe(PayloadKeys.menus(locationId)).map { decode<MenuList>(it) }
@@ -112,12 +120,23 @@ class ContentRepository @Inject constructor(
     private suspend fun refreshHomeInternal() = coroutineScope {
         val locationsDeferred = async { apiClient.listLocations() }
         val hoursDeferred = async { fetch { apiClient.listHours(PrefetchDays) } }
+        val eventsDeferred = async { refreshEventsIfStale() }
         val locations = locationsDeferred.await()
         store(PayloadKeys.LOCATIONS, locations)
         val hours = hoursDeferred.await()
         if (hours != null) store(PayloadKeys.HOURS, hours)
+        eventsDeferred.await()
         appScope.launch { prefetchMenusForOpenLocations(locations.locations, hours) }
         prune()
+    }
+
+    /**
+     * Fetches upcoming events or reuses the cached copy if we're within the [EventsCacheTtlMillis].
+     */
+    suspend fun refreshEventsIfStale() {
+        val cached = payloadDao.get(PayloadKeys.EVENTS)
+        if (cached != null && System.currentTimeMillis() - cached.fetchedAt < EventsCacheTtlMillis) return
+        fetch { apiClient.listEvents() }?.let { store(PayloadKeys.EVENTS, it) }
     }
 
     /**
