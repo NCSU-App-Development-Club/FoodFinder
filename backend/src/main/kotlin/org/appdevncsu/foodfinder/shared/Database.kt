@@ -12,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.batchUpsert
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.json.json
@@ -201,6 +202,16 @@ object Database {
 
     fun upsertDiningLocations(locations: List<DiningLocation>) {
         for (location in locations) {
+            // A renamed location gets a new slug. Drop the unit link from any other slug so the
+            // menu join doesn't return two rows for the same NetNutrition unit.
+            val unitId = location.unitId
+            if (unitId != null) {
+                DiningLocations.update({
+                    (DiningLocations.unitId eq unitId) and (DiningLocations.slug neq location.slug)
+                }) {
+                    it[DiningLocations.unitId] = null
+                }
+            }
             DiningLocations.upsert {
                 it[DiningLocations.slug] = location.slug
                 it[DiningLocations.name] = location.name
