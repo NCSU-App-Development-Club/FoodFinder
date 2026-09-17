@@ -8,9 +8,9 @@ An app for viewing NC State Dining menus and hours in one place.
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <picture><source media="(prefers-color-scheme: dark)" srcset="android/screenshots/home-dark.png"><img src="android/screenshots/home-light.png" width="250" alt="Home screen"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="android/screenshots/menu-list-dark.png"><img src="android/screenshots/menu-list-light.png" width="250" alt="Menu list screen"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="android/screenshots/menu-dark.png"><img src="android/screenshots/menu-light.png" width="250" alt="Menu screen"></picture> |
 
-| Item History                                                                                                                                                                                                                            | Favorites                                                                                                                                                                                                                              |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="android/screenshots/item-history-dark.png"><img src="android/screenshots/item-history-light.png" width="250" alt="Item history screen"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="android/screenshots/favorites-dark.png"><img src="android/screenshots/favorites-light.png" width="250" alt="Favorites screen"></picture> |
+| Item History                                                                                                                                                                                                    | Favorites                                                                                                                                                                                              | Event Details                                                                                                                                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="android/screenshots/item-history-dark.png"><img src="android/screenshots/item-history-light.png" width="250" alt="Item history screen"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="android/screenshots/favorites-dark.png"><img src="android/screenshots/favorites-light.png" width="250" alt="Favorites screen"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="android/screenshots/event-details-dark.png"><img src="android/screenshots/event-details-light.png" width="250" alt="Event details screen"></picture> |
 
 ## Why?
 
@@ -21,6 +21,8 @@ NC State Dining recently switched their menus to a new platform, [NetNutrition](
 - View NC State Dining locations with daily hours and location photos
   - Support for adjusted hours due to holidays or inclement weather
 - Dining menus with dietary restriction information and relevant categories surfaced first
+- Mark menu items as favorites to find them easily and get notified when they're on today's menu
+- View upcoming NC State Dining events in the app
 - Offline browsing after a menu has been downloaded once
 - Speedy interface with caching and speculative loading of common pages
 - Light/dark theme and Material You support
@@ -56,16 +58,16 @@ Backend:
 
 Base URL (production): https://foodfinder-api.appdevncsu.org. Routes are defined in `backend/src/main/kotlin/org/appdevncsu/foodfinder/server/Server.kt`.
 
-| Method | Path                                         | Query params                                            | Description                                                    |
-| ------ | -------------------------------------------- | ------------------------------------------------------- | -------------------------------------------------------------- |
-| `GET`  | `/api/locations`                             | —                                                       | List menu locations (`id`, `name`, `slug`, `type`, `imageUrl`) |
-| `GET`  | `/api/locations/{slug}/image`                | —                                                       | Get a proxied/cached location photo                            |
-| `GET`  | `/api/locations/{locationId}/menus`          | —                                                       | List upcoming menus for a location                             |
-| `GET`  | `/api/locations/{locationId}/menus/{menuId}` | —                                                       | Get sections + items (with dietary `flags` and `isNew`) for one menu |
-| `GET`  | `/api/locations/{locationId}/item-history`   | `name` (required), `date` (optional, defaults to latest menu date) | Dates an item was served in the 90 days ending on `date`, plus first-seen and weekly frequency |
-| `GET`  | `/api/hours`                                 | `days=N` (optional, 1–7, defaults to 3)                 | Hours per location for the next N days (today Eastern onward)  |
-| `GET`  | `/api/events`                                | —                                                       | Upcoming campus dining events (soonest 20), sourced from the dining.ncsu.edu calendar and cached for a day |
-| `QUERY` | `/api/favorites/menus`                      | JSON body: `items` (names), `days` (default 1)          | Upcoming menus containing any of the requested favorite items  |
+| Method  | Path                                         | Query params                                                       | Description                                                                                                |
+| ------- | -------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `GET`   | `/api/locations`                             | —                                                                  | List menu locations (`id`, `name`, `slug`, `type`, `imageUrl`)                                             |
+| `GET`   | `/api/locations/{slug}/image`                | —                                                                  | Get a proxied/cached location photo                                                                        |
+| `GET`   | `/api/locations/{locationId}/menus`          | —                                                                  | List upcoming menus for a location                                                                         |
+| `GET`   | `/api/locations/{locationId}/menus/{menuId}` | —                                                                  | Get sections + items (with dietary `flags` and `isNew`) for one menu                                       |
+| `GET`   | `/api/locations/{locationId}/item-history`   | `name` (required), `date` (optional, defaults to latest menu date) | Dates an item was served in the 90 days ending on `date`, plus first-seen and weekly frequency             |
+| `GET`   | `/api/hours`                                 | `days=N` (optional, 1–7, defaults to 3)                            | Hours per location for the next N days (today Eastern onward)                                              |
+| `GET`   | `/api/events`                                | —                                                                  | Upcoming campus dining events (soonest 20), sourced from the dining.ncsu.edu calendar and cached for a day |
+| `QUERY` | `/api/favorites/menus`                       | JSON body: `items` (names), `days` (default 1)                     | Upcoming menus containing any of the requested favorite items                                              |
 
 The API currently has no authorization mechanism. Feel free to use it for your own projects, as long as you set a distinct, custom `User-Agent` and respect the `Cache-Control` headers we set on our responses.
 
@@ -104,11 +106,11 @@ java -jar build/libs/*-all.jar <command>
 
 Available commands:
 
-| Command           | Purpose                                                                               |
-| ----------------- | ------------------------------------------------------------------------------------- |
+| Command           | Purpose                                                                                |
+| ----------------- | -------------------------------------------------------------------------------------- |
 | `scrape [target]` | Run a scrape once and exit. `target` is `all` (default), `menus`, `hours`, or `events` |
-| `serve`           | Run the API server on port 3000                                                       |
-| `serve-scheduled` | Run the API server and scrape daily at 6am Eastern Time                               |
+| `serve`           | Run the API server on port 3000                                                        |
+| `serve-scheduled` | Run the API server and scrape daily at 6am Eastern Time                                |
 
 Persistent data (SQLite database + image cache) lives in `$DATA_DIR`, defaulting to the working directory. The Docker image sets `DATA_DIR=/data` and exposes port 3000:
 

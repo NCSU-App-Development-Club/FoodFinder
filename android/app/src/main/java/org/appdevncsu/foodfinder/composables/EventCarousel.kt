@@ -128,34 +128,43 @@ internal fun EventDetailSheet(
     modifier: Modifier = Modifier,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(
-                    start = EventSheetHorizontalPadding,
-                    end = EventSheetHorizontalPadding,
-                    bottom = EventSheetBottomPadding,
-                ),
-        ) {
-            Text(text = event.title, style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(EventSheetSpacing))
+        EventDetails(event)
+    }
+}
+
+/** The contents of the event detail sheet: title, when, location, and the description. */
+@Composable
+internal fun EventDetails(
+    event: Event,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(
+                start = EventSheetHorizontalPadding,
+                end = EventSheetHorizontalPadding,
+                bottom = EventSheetBottomPadding,
+            ),
+    ) {
+        Text(text = event.title, style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(EventSheetSpacing))
+        Text(
+            text = formatEventWhen(event),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        event.location?.let { location ->
             Text(
-                text = formatEventWhen(event),
+                text = location,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            event.location?.let { location ->
-                Text(
-                    text = location,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            event.description?.takeIf { it.isNotBlank() }?.let { html ->
-                Spacer(modifier = Modifier.height(EventSheetDescriptionSpacing))
-                Text(text = AnnotatedString.fromHtml(html), style = MaterialTheme.typography.bodyMedium)
-            }
+        }
+        event.description?.takeIf { it.isNotBlank() }?.let { html ->
+            Spacer(modifier = Modifier.height(EventSheetDescriptionSpacing))
+            Text(text = AnnotatedString.fromHtml(html), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

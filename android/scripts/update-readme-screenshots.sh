@@ -46,3 +46,5 @@ frame_pixel9 "$SRC/${PREFIX}_itemHistoryLight.png" screenshots/item-history-ligh
 frame_pixel9 "$SRC/${PREFIX}_itemHistoryDark.png" screenshots/item-history-dark.png
 frame_pixel9 "$SRC/${PREFIX}_favoritesLight.png" screenshots/favorites-light.png
 frame_pixel9 "$SRC/${PREFIX}_favoritesDark.png" screenshots/favorites-dark.png
+frame_pixel9 "$SRC/${PREFIX}_eventDetailsLight.png" screenshots/event-details-light.png
+frame_pixel9 "$SRC/${PREFIX}_eventDetailsDark.png" screenshots/event-details-dark.png

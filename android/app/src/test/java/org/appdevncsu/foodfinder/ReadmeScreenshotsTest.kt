@@ -10,8 +10,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -21,6 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,12 +39,14 @@ import coil3.annotation.ExperimentalCoilApi
 import coil3.asImage
 import coil3.compose.AsyncImagePreviewHandler
 import coil3.compose.LocalAsyncImagePreviewHandler
+import org.appdevncsu.foodfinder.composables.EventDetails
 import org.appdevncsu.foodfinder.composables.FavoritesListContent
 import org.appdevncsu.foodfinder.composables.ItemHistoryCalendarContent
 import org.appdevncsu.foodfinder.composables.LocationListContent
 import org.appdevncsu.foodfinder.composables.MenuListContent
 import org.appdevncsu.foodfinder.composables.MenuSectionListContent
 import org.appdevncsu.foodfinder.composables.ScreenScaffold
+import org.appdevncsu.foodfinder.data.Event
 import org.appdevncsu.foodfinder.data.Item
 import org.appdevncsu.foodfinder.data.Location
 import org.appdevncsu.foodfinder.data.LocationListItem
@@ -57,6 +64,7 @@ import org.appdevncsu.foodfinder.viewmodel.MenuViewModel
 import org.junit.Rule
 import org.junit.Test
 import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * This class renders the screenshots shown in the README.
@@ -137,7 +145,12 @@ class ReadmeScreenshotsTest {
     @Test
     fun menuLight() {
         paparazzi.snapshot {
-            ReadmeFrame(title = "Lunch", subtitle = "Monday, August 25", onBack = {}, darkTheme = false) {
+            ReadmeFrame(
+                title = "Lunch",
+                subtitle = "Monday, August 25",
+                onBack = {},
+                darkTheme = false
+            ) {
                 MenuSectionListContent(
                     state = MenuViewModel.UiState(
                         loading = false,
@@ -151,7 +164,12 @@ class ReadmeScreenshotsTest {
     @Test
     fun menuDark() {
         paparazzi.snapshot {
-            ReadmeFrame(title = "Lunch", subtitle = "Monday, August 25", onBack = {}, darkTheme = true) {
+            ReadmeFrame(
+                title = "Lunch",
+                subtitle = "Monday, August 25",
+                onBack = {},
+                darkTheme = true
+            ) {
                 MenuSectionListContent(
                     state = MenuViewModel.UiState(
                         loading = false,
@@ -209,15 +227,94 @@ class ReadmeScreenshotsTest {
             }
         }
     }
+
+    @Test
+    fun eventDetailsLight() {
+        paparazzi.snapshot {
+            ReadmeEventDetailsFrame(
+                darkTheme = false,
+                events = sampleEvents,
+                event = sampleEvents.first()
+            )
+        }
+    }
+
+    @Test
+    fun eventDetailsDark() {
+        paparazzi.snapshot {
+            ReadmeEventDetailsFrame(
+                darkTheme = true,
+                events = sampleEvents,
+                event = sampleEvents.first()
+            )
+        }
+    }
 }
 
-@OptIn(ExperimentalCoilApi::class)
 @Composable
 private fun ReadmeFrame(
     title: String,
     subtitle: String? = null,
     onBack: (() -> Unit)? = null,
     darkTheme: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    ReadmeEnvironment(darkTheme) {
+        Column {
+            ReadmeStatusBar()
+            ScreenScaffold(title = title, subtitle = subtitle, onBack = onBack) {
+                content()
+            }
+        }
+    }
+}
+
+/**
+ * Renders the location list with the event detail sheet expanded over it.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReadmeEventDetailsFrame(
+    darkTheme: Boolean,
+    events: List<Event>,
+    event: Event,
+) {
+    ReadmeEnvironment(darkTheme) {
+        Column {
+            ReadmeStatusBar()
+            ScreenScaffold(title = "FoodFinder") {
+                LocationListContent(
+                    state = LocationListViewModel.UiState(
+                        loading = false,
+                        hoursLoading = false,
+                        items = sampleLocations,
+                        events = events,
+                    ),
+                    onLocationClick = {},
+                )
+            }
+        }
+        val density = LocalDensity.current
+        ModalBottomSheet(
+            onDismissRequest = {},
+            sheetState = SheetState(
+                // Paparazzi only captures `ModalBottomSheet` when its SheetState starts Expanded; with the
+                // default hidden state it renders nothing.
+                skipPartiallyExpanded = true,
+                positionalThreshold = { with(density) { SheetPositionalThreshold.toPx() } },
+                velocityThreshold = { with(density) { SheetVelocityThreshold.toPx() } },
+                initialValue = SheetValue.Expanded,
+            ),
+        ) {
+            EventDetails(event)
+        }
+    }
+}
+
+@OptIn(ExperimentalCoilApi::class)
+@Composable
+private fun ReadmeEnvironment(
+    darkTheme: Boolean,
     content: @Composable () -> Unit,
 ) {
     FoodFinderTheme(darkTheme = darkTheme, dynamicColor = false) {
@@ -239,15 +336,13 @@ private fun ReadmeFrame(
             LocalInspectionMode provides true,
             LocalAsyncImagePreviewHandler provides previewHandler,
         ) {
-            Column {
-                ReadmeStatusBar()
-                ScreenScaffold(title = title, subtitle = subtitle, onBack = onBack) {
-                    content()
-                }
-            }
+            content()
         }
     }
 }
+
+private val SheetPositionalThreshold = 56.dp
+private val SheetVelocityThreshold = 125.dp
 
 /** Fake status bar so that the screenshots fit the device frame better */
 @Composable
@@ -337,6 +432,38 @@ private val sampleLocations = listOf(
         status = LocationStatus.Closed("9:00am - 7:00pm"),
     ),
 )
+
+private val screenshotZone: ZoneId = ZoneId.of("America/New_York")
+
+// Events start "tomorrow" so the rendered date label is always "Tomorrow" and the
+// screenshot stays stable across days.
+private val sampleEvents: List<Event> = run {
+    val tomorrow = LocalDate.now(screenshotZone).plusDays(1)
+    fun at(hour: Int, minute: Int): String =
+        tomorrow.atTime(hour, minute).atZone(screenshotZone).toInstant().toString()
+    listOf(
+        Event(
+            id = "bug-bites",
+            title = "Bug Bites",
+            description = "<p>Whether you're a curious foodie or a sustainability enthusiast, come sample " +
+                    "bug-forward bites and learn about the environmental and nutritional benefits of alternative " +
+                    "proteins.</p><p>Special guest Kaira Sidhwa, a Food Science graduate student, will be on site " +
+                    "to answer your questions about insects as the next big culinary trend.</p>",
+            location = "Case Dining Hall, 240 Jeter Dr, Raleigh, NC 27606, USA",
+            start = at(11, 0),
+            end = at(13, 30),
+        ),
+        Event(
+            id = "latin-heritage",
+            title = "Latin Heritage Month Meal",
+            description = "<p>Celebrate Latin Heritage Month at Fountain Dining Hall! Join us every Thursday " +
+                    "at the Sauté station for authentic dishes from across Latin America.</p>",
+            location = "Fountain Dining Hall, 2520 Sullivan Dr, Raleigh, NC 27695, USA",
+            start = at(10, 30),
+            end = at(21, 0),
+        ),
+    )
+}
 
 private val sampleMenus = MenuList(
     menus = listOf(
