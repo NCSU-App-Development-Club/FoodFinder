@@ -155,6 +155,7 @@ class ReadmeScreenshotsTest {
                     state = MenuViewModel.UiState(
                         loading = false,
                         sections = sampleSections,
+                        favoriteNames = sampleFavoriteItemNames,
                     ),
                 )
             }
@@ -174,6 +175,7 @@ class ReadmeScreenshotsTest {
                     state = MenuViewModel.UiState(
                         loading = false,
                         sections = sampleSections,
+                        favoriteNames = sampleFavoriteItemNames,
                     ),
                 )
             }
@@ -480,6 +482,11 @@ private val sampleMenus = MenuList(
         Menu(name = "Dinner", id = 10039400, date = "2025-08-27", locationId = 1),
         Menu(name = "Daily", id = 10039402, date = "2025-08-27", locationId = 1),
     ),
+)
+
+private val sampleFavoriteItemNames = setOf(
+    "pesto rubbed chicken breast",
+    "garlic green beans",
 )
 
 private val sampleSections = SectionList(

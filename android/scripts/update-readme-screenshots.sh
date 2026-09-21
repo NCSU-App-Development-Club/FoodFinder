@@ -49,7 +49,7 @@ frame_pixel9 "$SRC/${PREFIX}_favoritesDark.png" screenshots/favorites-dark.png
 frame_pixel9 "$SRC/${PREFIX}_eventDetailsLight.png" screenshots/event-details-light.png
 frame_pixel9 "$SRC/${PREFIX}_eventDetailsDark.png" screenshots/event-details-dark.png
 
-# Copy the finished screenshots where the Astro site can serve them.
-DEST="../frontend/public/screenshots"
+# Copy the finished screenshots into the Astro site's asset pipeline.
+DEST="../frontend/src/assets/screenshots"
 mkdir -p "$DEST"
 cp screenshots/*.png "$DEST/"
