@@ -1,0 +1,54 @@
+---
+import { getImage } from "astro:assets";
+
+interface Props {
+  light: ImageMetadata;
+  dark: ImageMetadata;
+  alt: string;
+  caption: string;
+}
+
+const { light, dark, alt, caption } = Astro.props;
+
+const widths = [250, 500];
+const lightImage = await getImage({ src: light, widths, format: "webp" });
+const darkImage = await getImage({ src: dark, widths, format: "webp" });
+---
+
+<figure class="screenshot">
+  <picture>
+    <source
+      media="(prefers-color-scheme: dark)"
+      srcset={darkImage.srcSet.attribute}
+      type="image/webp"
+    />
+    <img
+      src={lightImage.src}
+      srcset={lightImage.srcSet.attribute}
+      {...lightImage.attributes}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+    />
+  </picture>
+  <figcaption>{caption}</figcaption>
+</figure>
+
+<style>
+  .screenshot {
+    margin: 0;
+    text-align: center;
+  }
+
+  img {
+    width: 100%;
+    max-width: 250px;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+</style>

@@ -5,6 +5,7 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.cio.*
 import io.ktor.server.engine.*
+import io.ktor.server.http.content.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.compression.*
 import io.ktor.server.plugins.conditionalheaders.*
@@ -20,6 +21,7 @@ import org.appdevncsu.foodfinder.shared.DiningLocationSchedule
 import org.appdevncsu.foodfinder.shared.FavoriteRequest
 import org.appdevncsu.foodfinder.shared.NCSU_ZONE
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.security.MessageDigest
 import java.time.LocalDate
 
@@ -64,6 +66,20 @@ fun Application.module() {
     install(ConditionalHeaders)
     install(Compression) {
         gzip()
+    }
+    configureStaticFiles()
+}
+
+/** Serves the Astro website for every path that isn't an API route */
+private fun Application.configureStaticFiles() {
+    val staticDir = File(System.getenv("STATIC_DIR") ?: "static")
+    if (!staticDir.isDirectory) {
+        log.warn("Static web root {} does not exist; serving the API only", staticDir.absolutePath)
+        return
+    }
+    log.info("Serving the website from {}", staticDir.absolutePath)
+    routing {
+        staticFiles("/", staticDir)
     }
 }
 

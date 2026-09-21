@@ -1,0 +1,114 @@
+---
+import Footer from "../components/Footer.astro";
+import Screenshot from "../components/Screenshot.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+import eventDetailsDark from "../assets/screenshots/event-details-dark.png";
+import eventDetailsLight from "../assets/screenshots/event-details-light.png";
+import favoritesDark from "../assets/screenshots/favorites-dark.png";
+import favoritesLight from "../assets/screenshots/favorites-light.png";
+import homeDark from "../assets/screenshots/home-dark.png";
+import homeLight from "../assets/screenshots/home-light.png";
+import itemHistoryDark from "../assets/screenshots/item-history-dark.png";
+import itemHistoryLight from "../assets/screenshots/item-history-light.png";
+import menuDark from "../assets/screenshots/menu-dark.png";
+import menuLight from "../assets/screenshots/menu-light.png";
+import menuListDark from "../assets/screenshots/menu-list-dark.png";
+import menuListLight from "../assets/screenshots/menu-list-light.png";
+
+const screenshots = [
+  { light: homeLight, dark: homeDark, alt: "Home screen", caption: "Home" },
+  {
+    light: menuListLight,
+    dark: menuListDark,
+    alt: "Menu list screen",
+    caption: "Menu list",
+  },
+  { light: menuLight, dark: menuDark, alt: "Menu screen", caption: "Menu" },
+  {
+    light: itemHistoryLight,
+    dark: itemHistoryDark,
+    alt: "Item history screen",
+    caption: "Item history",
+  },
+  {
+    light: favoritesLight,
+    dark: favoritesDark,
+    alt: "Favorites screen",
+    caption: "Favorites",
+  },
+  {
+    light: eventDetailsLight,
+    dark: eventDetailsDark,
+    alt: "Event details screen",
+    caption: "Event details",
+  },
+];
+---
+
+<BaseLayout
+  title="FoodFinder - NC State Dining menus and hours"
+  description="FoodFinder shows NC State Dining menus, hours, and events in one fast, streamlined Android app.">
+  <img
+    class="app-icon"
+    src="/favicon.svg"
+    alt="FoodFinder app icon"
+    width="80"
+    height="80"
+  />
+  <h1>FoodFinder</h1>
+  <p class="tagline">
+    NC State Dining menus, hours, and events, all in one place.
+  </p>
+
+  <p>
+    FoodFinder is a native Android app that brings together NC State Dining
+    menus, hours, and events into one fast, streamlined app. It that gives you
+    the information you need and gets out of your way.
+  </p>
+
+  <div class="gallery">
+    {screenshots.map((shot) => <Screenshot {...shot} />)}
+  </div>
+
+  <h2>Features</h2>
+  <ul>
+    <li>
+      View NC State Dining locations with daily hours and location photos
+      <ul>
+        <li>Support for adjusted hours due to holidays or inclement weather</li>
+      </ul>
+    </li>
+    <li>
+      Dining menus with dietary restriction information and relevant categories
+      surfaced first
+    </li>
+    <li>
+      Mark menu items as favorites to find them easily and get notified when
+      they're on today's menu
+    </li>
+    <li>View upcoming NC State Dining events in the app</li>
+    <li>See a menu item's history to predict when it will be offered next</li>
+    <li>Offline browsing after a menu has been downloaded once</li>
+    <li>A speedy interface that stays out of your way</li>
+    <li>Light and dark theme, with support for your device's color palette</li>
+  </ul>
+
+  <h2>Credits</h2>
+  <p>
+    FoodFinder was developed from Fall 2025 &mdash; Spring 2026 by the Android
+    team of the <a href="https://appdevncsu.org"
+      >App Development Club at NC State</a
+    >.
+  </p>
+  <ul>
+    <li>Brendan Swanson</li>
+    <li>Dylan Lester</li>
+    <li>Daniel Flores Elizondo</li>
+    <li>Jonathan Duran-Ortiz</li>
+    <li>Gauri Subash</li>
+    <li>Venkat Vulava</li>
+  </ul>
+
+  <Footer />
+</BaseLayout>

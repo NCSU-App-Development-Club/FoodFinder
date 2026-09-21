@@ -23,6 +23,7 @@ NC State Dining recently switched their menus to a new platform, [NetNutrition](
 - Dining menus with dietary restriction information and relevant categories surfaced first
 - Mark menu items as favorites to find them easily and get notified when they're on today's menu
 - View upcoming NC State Dining events in the app
+- See a menu item's history to predict when it will be offered next
 - Offline browsing after a menu has been downloaded once
 - Speedy interface with caching and speculative loading of common pages
 - Light/dark theme and Material You support
@@ -56,7 +57,7 @@ Backend:
 
 ## API
 
-Base URL (production): https://foodfinder-api.appdevncsu.org. Routes are defined in `backend/src/main/kotlin/org/appdevncsu/foodfinder/server/Server.kt`.
+Base URL (production): https://foodfinder.appdevncsu.org. Routes are defined in `backend/src/main/kotlin/org/appdevncsu/foodfinder/server/Server.kt`.
 
 | Method  | Path                                         | Query params                                                       | Description                                                                                                |
 | ------- | -------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
@@ -77,13 +78,15 @@ The API currently has no authorization mechanism. Feel free to use it for your o
 .
 ├── android/   # Android app (Kotlin, Jetpack Compose)
 │   ├── app/src/main/  # UI, ViewModels, API client
-└── backend/   # Ktor API server + scrapers (Kotlin/JVM)
-    ├── src/main/kotlin/org/appdevncsu/foodfinder/
-    │   ├── scraper/  # NetNutrition + dining.ncsu.edu scrapers
-    │   ├── server/   # API routes, image proxy, daily-scrape scheduler
-    │   └── shared/   # SQLite/Exposed database + data models
-    ├── config/deploy.yml  # Kamal deploy config
-    └── Dockerfile
+├── backend/   # Ktor API server + scrapers (Kotlin/JVM)
+│   ├── src/main/kotlin/org/appdevncsu/foodfinder/
+│   │   ├── scraper/  # NetNutrition + dining.ncsu.edu scrapers
+│   │   ├── server/   # API routes, image proxy, daily-scrape scheduler
+│   │   └── shared/   # SQLite/Exposed database + data models
+│   ├── config/deploy.yml  # Kamal deploy config
+│   └── Dockerfile
+└── frontend/  # Marketing website (Astro), served by the backend
+    └── src/pages/  # Pages, e.g. the landing page and privacy policy
 ```
 
 ## Development
@@ -112,16 +115,29 @@ Available commands:
 | `serve`           | Run the API server on port 3000                                                        |
 | `serve-scheduled` | Run the API server and scrape daily at 6am Eastern Time                                |
 
-Persistent data (SQLite database + image cache) lives in `$DATA_DIR`, defaulting to the working directory. The Docker image sets `DATA_DIR=/data` and exposes port 3000:
+You can build the FoodFinder backend and marketing site as a Docker image. From the repo root:
 
 ```bash
-cd backend
-docker build -t foodfinder-backend .
+docker build -f backend/Dockerfile -t foodfinder-backend .
 docker run -p 3000:3000 -v foodfinder_data:/data foodfinder-backend
 # curl http://localhost:3000/api/locations
+# open http://localhost:3000/
 ```
 
-In production, we use Kamal (see `backend/config/deploy.yml`) to deploy to https://foodfinder-api.appdevncsu.org.
+In production, we use Kamal (see `backend/config/deploy.yml`) to deploy to https://foodfinder.appdevncsu.org.
+
+### Website
+
+The marketing site in `frontend/` is an [Astro](https://astro.build/) project. It is built into the backend image and served by the Ktor server.
+
+```bash
+cd frontend
+npm install
+npm run dev      # local dev server with hot reload
+npm run build    # static output in frontend/dist
+```
+
+To serve the built site locally through the backend, run `npm run build` and then start the server with the `STATIC_DIR=frontend/dist` environment variable.
 
 ### Android app
 
@@ -132,7 +148,7 @@ cd android
 ./gradlew assembleDebug
 ```
 
-The app points at the production API (`https://foodfinder-api.appdevncsu.org` in `android/app/src/main/java/org/appdevncsu/foodfinder/data/APIClient.kt`) by default. For a signed release build, copy `android/keystore.properties.example` to `android/keystore.properties` and fill in the values (or set the `RELEASE_STORE_*` / `RELEASE_KEY_*` env vars).
+The app points at the production API (`https://foodfinder.appdevncsu.org` in `android/app/src/main/java/org/appdevncsu/foodfinder/data/APIClient.kt`) by default. For a signed release build, copy `android/keystore.properties.example` to `android/keystore.properties` and fill in the values (or set the `RELEASE_STORE_*` / `RELEASE_KEY_*` env vars).
 
 ### Lint
 

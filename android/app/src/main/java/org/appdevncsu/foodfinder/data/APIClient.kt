@@ -185,7 +185,7 @@ data class ItemHistory(
 @InstallIn(SingletonComponent::class)
 internal object APIClientModule {
 
-    internal const val API_ORIGIN = "https://foodfinder-api.appdevncsu.org"
+    internal const val API_ORIGIN = "https://foodfinder.appdevncsu.org"
     private const val BASE_URL = "$API_ORIGIN/api/"
     private const val HTTP_CACHE_SIZE_BYTES = 50L * 1024 * 1024
 

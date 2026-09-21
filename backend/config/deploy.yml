@@ -19,7 +19,7 @@ servers:
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
 proxy:
   ssl: true
-  host: foodfinder-api.appdevncsu.org
+  host: foodfinder.appdevncsu.org
   # Proxy connects to your container on port 80 by default.
   app_port: 3000
 
@@ -37,9 +37,8 @@ registry:
 # Configure builder setup.
 builder:
   arch: amd64
-  # backend/ is the Kamal project root, so build from the local checkout
-  # (avoids sending the whole monorepo as build context).
-  context: .
+  context: ..
+  dockerfile: Dockerfile
   # Pass in additional build args needed for your Dockerfile.
   # args:
   #   RUBY_VERSION: <%= ENV["RBENV_VERSION"] || ENV["rvm_ruby_string"] || "#{RUBY_ENGINE}-#{RUBY_ENGINE_VERSION}" %>

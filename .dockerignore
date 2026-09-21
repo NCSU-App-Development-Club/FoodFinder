@@ -1,0 +1,22 @@
+android
+
+.git
+.github
+.idea
+*.iml
+out
+
+# Dependencies and build output
+**/build
+**/.gradle
+**/.kotlin
+**/node_modules
+**/dist
+**/.astro
+
+# Local runtime data
+backend/.kamal
+backend/data.db
+backend/image-cache
+*.db
+*.trace.db
