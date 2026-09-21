@@ -398,8 +398,8 @@ private fun StatusBarIcons(color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-// Fixed sample data on fixed dates — never LocalDate.now() — so re-recording
-// only changes pixels when UI code actually changes.
+// Fixed sample data on fixed dates so that recreating the screenshots
+// only actually causes changes when UI code changes.
 private val sampleLocations = listOf(
     LocationListItem(
         Location(
@@ -467,42 +467,205 @@ private val sampleEvents: List<Event> = run {
 
 private val sampleMenus = MenuList(
     menus = listOf(
-        Menu(name = "Breakfast", id = 1, date = "2025-08-25", locationId = 1),
-        Menu(name = "Lunch", id = 2, date = "2025-08-25", locationId = 1),
-        Menu(name = "Dinner", id = 3, date = "2025-08-26", locationId = 1),
+        Menu(name = "Breakfast", id = 10039390, date = "2025-08-25", locationId = 1),
+        Menu(name = "Lunch", id = 10039391, date = "2025-08-25", locationId = 1),
+        Menu(name = "Dinner", id = 10039392, date = "2025-08-25", locationId = 1),
+        Menu(name = "Daily", id = 10039393, date = "2025-08-25", locationId = 1),
+        Menu(name = "Breakfast", id = 10039394, date = "2025-08-26", locationId = 1),
+        Menu(name = "Lunch", id = 10039395, date = "2025-08-26", locationId = 1),
+        Menu(name = "Dinner", id = 10039396, date = "2025-08-26", locationId = 1),
+        Menu(name = "Daily", id = 10039397, date = "2025-08-26", locationId = 1),
+        Menu(name = "Breakfast", id = 10039398, date = "2025-08-27", locationId = 1),
+        Menu(name = "Lunch", id = 10039399, date = "2025-08-27", locationId = 1),
+        Menu(name = "Dinner", id = 10039400, date = "2025-08-27", locationId = 1),
+        Menu(name = "Daily", id = 10039402, date = "2025-08-27", locationId = 1),
     ),
 )
 
 private val sampleSections = SectionList(
     sections = listOf(
         Section(
-            name = "Entrees",
-            id = 1,
+            name = "Home Style Entree",
+            id = 3026,
             items = listOf(
                 Item(
-                    name = "Grilled Chicken Sandwich",
-                    id = 1,
-                    sectionId = 1,
-                    flags = listOf("Wolf Approved", "Contains Gluten", "Contains Dairy"),
+                    name = "Hawaiian Sweet Roll",
+                    id = 218746992,
+                    sectionId = 3026,
+                    flags = listOf(
+                        "Contains Dairy", "Contains Gluten", "Eggs", "Soy",
+                        "Halal (U)", "Vegetarian",
+                    ),
                 ),
                 Item(
-                    name = "Black Bean Burger",
-                    id = 2,
-                    sectionId = 1,
-                    flags = listOf("Wolf Approved", "Vegetarian", "Vegan"),
+                    name = "Pesto Rubbed Chicken Breast",
+                    id = 218746995,
+                    sectionId = 3026,
+                    flags = listOf("Contains Dairy"),
                     isNew = true,
+                ),
+                Item(
+                    name = "Lemon Pepper Fish",
+                    id = 218746990,
+                    sectionId = 3026,
+                    flags = listOf("Contains Seafood", "Halal (U)"),
+                ),
+                Item(
+                    name = "Garlic Green Beans",
+                    id = 218746991,
+                    sectionId = 3026,
+                    flags = listOf("Halal (U)", "Vegan", "Vegetarian"),
+                ),
+                Item(
+                    name = "Mushroom Rice Pilaf",
+                    id = 218746994,
+                    sectionId = 3026,
+                    flags = emptyList(),
+                ),
+                Item(
+                    name = "Eggplant in Spicy Garlic Sauce",
+                    id = 218746989,
+                    sectionId = 3026,
+                    flags = listOf("Contains Sesame", "Soy", "Halal (U)", "Vegan", "Vegetarian"),
+                ),
+                Item(
+                    name = "Honey Sriracha Carrots",
+                    id = 218746993,
+                    sectionId = 3026,
+                    flags = listOf("Contains Sesame", "Soy", "Halal (U)", "Vegetarian"),
                 ),
             ),
         ),
         Section(
-            name = "Sides",
-            id = 2,
+            name = "Simply Made",
+            id = 3034,
             items = listOf(
                 Item(
-                    name = "Seasoned Fries",
-                    id = 3,
-                    sectionId = 2,
-                    flags = listOf("Vegetarian"),
+                    name = "Steamed Cauliflower",
+                    id = 218747016,
+                    sectionId = 3034,
+                    flags = listOf("Halal (U)", "Vegan", "Vegetarian"),
+                ),
+                Item(
+                    name = "Corn & Peppers",
+                    id = 218747017,
+                    sectionId = 3034,
+                    flags = listOf("Halal (U)", "Vegan", "Vegetarian"),
+                ),
+                Item(
+                    name = "Vegetable Paella",
+                    id = 218747021,
+                    sectionId = 3034,
+                    flags = listOf("Halal (U)", "Vegan", "Vegetarian"),
+                    isNew = true,
+                ),
+                Item(
+                    name = "Skirt Steak",
+                    id = 218747020,
+                    sectionId = 3034,
+                    flags = emptyList(),
+                ),
+                Item(
+                    name = "Chimichurri Sauce",
+                    id = 218747019,
+                    sectionId = 3034,
+                    flags = listOf("Vegan", "Vegetarian"),
+                ),
+                Item(
+                    name = "Roasted Sweet Potato Fingerlings",
+                    id = 218747018,
+                    sectionId = 3034,
+                    flags = listOf("Halal (U)", "Vegan", "Vegetarian"),
+                ),
+            ),
+        ),
+        Section(
+            name = "Display",
+            id = 3005,
+            items = listOf(
+                Item(
+                    name = "Chicken & Waffle Station",
+                    id = 218747015,
+                    sectionId = 3005,
+                    flags = listOf(
+                        "Contains Dairy", "Contains Gluten", "Contains Pork", "Eggs", "Soy",
+                    ),
+                ),
+            ),
+        ),
+        Section(
+            name = "Saute Station",
+            id = 3025,
+            items = listOf(
+                Item(
+                    name = "Spring Roll",
+                    id = 218747007,
+                    sectionId = 3025,
+                    flags = listOf(
+                        "Contains Gluten", "Contains Sesame", "Soy", "Halal (U)",
+                        "Vegan", "Vegetarian",
+                    ),
+                ),
+                Item(
+                    name = "Fortune Cookies",
+                    id = 218747004,
+                    sectionId = 3025,
+                    flags = listOf("Contains Gluten", "Soy"),
+                ),
+                Item(
+                    name = "Duck Sauce",
+                    id = 218747005,
+                    sectionId = 3025,
+                    flags = listOf("Vegan", "Vegetarian"),
+                ),
+                Item(
+                    name = "Beef Teriyaki",
+                    id = 218747002,
+                    sectionId = 3025,
+                    flags = listOf("Contains Gluten", "Soy"),
+                ),
+                Item(
+                    name = "Sauteed Asian Vegetables",
+                    id = 218747008,
+                    sectionId = 3025,
+                    flags = listOf("Contains Sesame"),
+                ),
+                Item(
+                    name = "Fried Rice",
+                    id = 218747006,
+                    sectionId = 3025,
+                    flags = listOf("Soy", "Halal (U)", "Vegan", "Vegetarian"),
+                ),
+            ),
+        ),
+        Section(
+            name = "Pizza",
+            id = 3042,
+            items = listOf(
+                Item(
+                    name = "Beef Pepperoni Pizza",
+                    id = 218746999,
+                    sectionId = 3042,
+                    flags = listOf("Contains Dairy", "Contains Gluten"),
+                ),
+                Item(
+                    name = "Traditional Cheese Pizza",
+                    id = 218746998,
+                    sectionId = 3042,
+                    flags = listOf("Contains Dairy", "Contains Gluten", "Soy", "Vegetarian"),
+                ),
+                Item(
+                    name = "Gluten Friendly Veggie Pizza",
+                    id = 218747001,
+                    sectionId = 3042,
+                    flags = listOf("Contains Dairy", "Vegetarian"),
+                ),
+                Item(
+                    name = "BBQ Chicken & Bacon Pizza",
+                    id = 218747000,
+                    sectionId = 3042,
+                    flags = listOf("Contains Dairy", "Contains Gluten", "Contains Pork"),
+                    isNew = true,
                 ),
             ),
         ),
