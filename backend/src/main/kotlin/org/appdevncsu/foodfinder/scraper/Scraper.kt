@@ -96,7 +96,7 @@ object Scraper {
         var categoryName: String? = null
         var categoryId: Int? = null
 
-        val items = mutableListOf<MenuItem>()
+        var items = mutableListOf<MenuItem>()
         for (row in rows) {
             if (row.hasAttr("onclick")) {
                 // This is a category row
@@ -105,6 +105,7 @@ object Scraper {
                 }
                 categoryId = sectionIdPattern.matchEntire(row.attr("onclick"))!!.groups[1]!!.value.toInt()
                 categoryName = row.text()
+                items = mutableListOf()
             } else {
                 // This is a menu item row
                 if (categoryName == null || categoryId == null) {
