@@ -90,7 +90,7 @@ private fun scrapeMenus() {
 
         transaction { Database.replaceMenus(menus) }
         transaction { Database.upsertMenuSections(menuSections) }
-        transaction { Database.upsertMenuItems(menuItems) }
+        transaction { Database.upsertMenuItems(menus.map { it.id }, menuItems) }
     } finally {
         pool.shutdown()
     }

@@ -326,7 +326,8 @@ object Database {
         }
     }
 
-    fun upsertMenuItems(items: List<Pair<Int /* menuId*/, MenuItem>>) {
+    fun upsertMenuItems(menuIds: Collection<Int>, items: List<Pair<Int /* menuId*/, MenuItem>>) {
+        SectionsToItems.deleteWhere { SectionsToItems.menuId inList menuIds.distinct() }
         MenuItems.batchUpsert(items) {
             this[MenuItems.id] = it.second.id
             this[MenuItems.name] = it.second.name
